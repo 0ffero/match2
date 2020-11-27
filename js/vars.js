@@ -148,6 +148,7 @@ var vars = {
 
     cards: {
         cardArray: [],
+        cardsUsed: [],
         cardPosArray: [],
         cardWidth: 200,
         cardHeight: 260,
@@ -183,6 +184,11 @@ var vars = {
                     onComplete: onComplete
                 })
             })
+        },
+
+        buildDefaultArrays: function() {
+            vars.cards.cardArray = Phaser.Utils.Array.NumberArray(0,8); // 9 individual cards in each set
+            vars.cards.cardPosArray = Phaser.Utils.Array.NumberArray(0,17); // <-- total positions = 18
         },
 
         checkForPair: function() {
@@ -327,6 +333,29 @@ var vars = {
                 scene.groups.cardsGroup.addMultiple([picA,picB]);
                 scene.groups.cardBacksGroup.addMultiple([cardBackA,cardBackB]);
             }
+        },
+
+        restart: function() {
+            // CLEAN UP
+            // re initialise all the variables
+            let cV = vars.cards;
+            cV.pairsLeft[0]=cV.pairsLeft[1];
+            vars.cards.buildDefaultArrays();
+
+            // empty out the groups
+            let groups = scene.groups;
+            groups.cardsGroup.children.each( (c)=> { c.destroy(); })
+            groups.cardsGroup.clear();
+            groups.cardBacksGroup.children.each( (c)=> { c.destroy(); })
+            groups.cardBacksGroup.clear();
+
+            // remove well done and play again
+            scene.children.getByName('wellDone').destroy();
+            scene.children.getByName('playAgain').destroy();
+
+            // START THE GAME
+            vars.game.init();
+            vars.cards.allFaceDown();
         }
     },
 
@@ -338,7 +367,7 @@ var vars = {
                 if (card.name.includes('back')) {
                     vars.cards.showThisCard(card);
                 } else if (card.name==='playAgain') {
-                    window.location.reload();
+                    vars.game.restart();
                 } else if (card.name==='fullScreenButton') {
                     if (scene.scale.isFullscreen) { card.setFrame('fullScreen'); scene.scale.stopFullscreen(); } else { card.setFrame('fullScreen2'); scene.scale.startFullscreen(); }
                 } else  {

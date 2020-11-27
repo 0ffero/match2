@@ -1,5 +1,4 @@
 if (vars.DEBUG===true) { console.log('Initialising...'); }
-init();
 
 var config = {
     title: "Match 2",
@@ -28,11 +27,6 @@ var config = {
 };
 
 var game = new Phaser.Game(config);
-
-function init() {
-    vars.cards.cardArray = Phaser.Utils.Array.NumberArray(0,8); // 9 individual cards in each set
-    vars.cards.cardPosArray = Phaser.Utils.Array.NumberArray(0,17); // <-- total positions = 18
-}
 
 
 /*
@@ -68,6 +62,8 @@ function preload() {
 █████ █   █ █████ █   █   █   █████ 
 */
 function create() {
+    vars.cards.buildDefaultArrays();
+
     scene.groups = {};
     scene.add.image(vars.canvas.cX, vars.canvas.cY, 'background');
     scene.groups.cardsGroup = scene.add.group();

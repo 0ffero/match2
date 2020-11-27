@@ -1,8 +1,3 @@
-function loadAssets() {
-    
-}
-
-
 function batmanLoader() {
     let files = vars.files.batman;
     let batmanImages = files.images;
