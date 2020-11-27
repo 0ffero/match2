@@ -344,6 +344,7 @@ var vars = {
             // re initialise all the variables
             let cV = vars.cards;
             cV.pairsLeft[0]=cV.pairsLeft[1];
+            vars.game.moves=0;
             vars.cards.buildDefaultArrays();
 
             // empty out the groups
