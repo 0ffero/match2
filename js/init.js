@@ -52,6 +52,7 @@ function preload() {
 
     // UI
     scene.load.image('background', 'images/backgroundBlue.jpg');
+    scene.load.image('fullScreenButton', 'images/fullScreen.png');
 
     // VIDEO
     //scene.load.video('introVideo', 'video/batman.mp4'); <--- this doesnt exist, but for future reference
@@ -126,6 +127,10 @@ function create() {
             vars.cards.showThisCard(card);
         } else if (card.name==='playAgain') {
             window.location.reload();
+        } else if (card.name==='fullScreenButton') {
+            if (scene.scale.isFullscreen) { scene.scale.stopFullscreen(); } else { scene.scale.startFullscreen(); }
+        } else  {
+            console.log(card);
         }
     });
 
@@ -146,6 +151,9 @@ function create() {
             onComplete: onComplete
         })
     })
+
+    // Full Screen Icon
+    scene.add.image(1840,1000, 'fullScreenButton').setName('fullScreenButton').setData('fullScreen','false').setInteractive();
 
     // Show the welcome message
     scene.add.bitmapText(50, 900, 'batFont', 'Welcome to Match 2, Caleb\n\nLego Batman Edition', 52, 1).setScale(0.9,1)
