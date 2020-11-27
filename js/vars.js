@@ -386,7 +386,9 @@ var vars = {
                     vars.game.restart();
                 } else if (card.name==='fullScreenButton') {
                     if (scene.scale.isFullscreen) { card.setFrame('fullScreen'); scene.scale.stopFullscreen(); } else { card.setFrame('fullScreen2'); scene.scale.startFullscreen(); }
-                } else  {
+                } else if (card.name==='restartButton') { 
+                    vars.game.restart();
+                } else {
                     if (vars.DEBUG===true) { console.log(card); }
                 }
             });

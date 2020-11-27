@@ -47,6 +47,7 @@ function preload() {
     // UI
     scene.load.image('background', 'images/backgroundBlue.jpg');
     scene.load.atlas('fullScreenButton', 'images/fullScreen.png', 'images/fullScreen.json');
+    scene.load.image('restartButton', 'images/reload.png');
 
     // VIDEO
     //scene.load.video('introVideo', 'video/batman.mp4'); <--- this doesnt exist, but for future reference
@@ -81,6 +82,8 @@ function create() {
 
     // Full Screen Icon
     scene.add.image(1840,1000, 'fullScreenButton').setName('fullScreenButton').setData('fullScreen','false').setInteractive();
+    // Restart Icon
+    scene.add.image(1640,1000, 'restartButton').setName('restartButton').setInteractive();
 
     // Show the welcome message
     scene.add.bitmapText(50, 900, 'batFont', 'Welcome to Match 2, Caleb\n\nLego Batman Edition', 52, 1).setScale(0.9,1)
