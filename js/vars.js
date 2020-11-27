@@ -102,7 +102,8 @@ var vars = {
                 targets: [back1,back2],
                 delay: duration*3,
                 scaleX: 1,
-                duration: duration
+                duration: duration,
+                onComplete: vars.input.enable,
             })
         }
     },
@@ -196,11 +197,14 @@ var vars = {
             let cV = vars.cards;
             let aV = vars.audio;
             let gV = vars.game;
+            vars.input.disable();
             gV.moves++;
-    
+
             // do we have a pair?
             let card1 = cV.selected[0][0]; let card2 = cV.selected[1][0];
             if (card1===card2) { // YES
+                // enable input again
+                vars.input.enable();
                 // update the found count
                 cV.pairsLeft[0]--;
                 if (cV.pairsLeft[0]>0) { // do we have pairs still to find?
@@ -256,6 +260,7 @@ var vars = {
         },
 
         showThisCard: function(_card) {
+            if (vars.input.enabled===false) { return false; }
             if (vars.DEBUG===true) { console.log('Showing This card'); }
             let cardName = _card.name; // this is the back of the card
             cardName = cardName.match(/\w+_([0-9])_([ab])/);
@@ -279,7 +284,6 @@ var vars = {
                 onComplete: vars.cards.addCardToSelected,
                 onCompleteParams: [ card ]
             })
-
         }
     },
 
@@ -362,6 +366,18 @@ var vars = {
     input: {
         enabled: true,
 
+        disable: function() {
+            if (vars.input.enabled===true) {
+                vars.input.enabled=false;
+            }
+        },
+
+        enable: function() {
+            if (vars.input.enabled===false) {
+                vars.input.enabled=true;
+            }
+        },
+
         init: function() {
             scene.input.on('gameobjectdown', function (pointer, card) {
                 if (card.name.includes('back')) {
@@ -371,7 +387,7 @@ var vars = {
                 } else if (card.name==='fullScreenButton') {
                     if (scene.scale.isFullscreen) { card.setFrame('fullScreen'); scene.scale.stopFullscreen(); } else { card.setFrame('fullScreen2'); scene.scale.startFullscreen(); }
                 } else  {
-                    console.log(card);
+                    if (vars.DEBUG===true) { console.log(card); }
                 }
             });
         }
