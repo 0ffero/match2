@@ -162,8 +162,78 @@ var vars = {
             cV.selected.push(_card[0].getData('cardID'));
             cV.selectedPair.push(_card[0].getData('pair'));
             if (cV.selected.length===2) { // 2nd card has been clicked
-                vars.checkForPair();
+                vars.cards.checkForPair();
             }
+        },
+
+        allFaceDown: function() {
+            let first = true;
+            let duration = vars.cards.spinDuration/2;
+            scene.groups.cardsGroup.children.each( (c)=> {
+                let onComplete = null;
+                if (first===true) {
+                    first = false;
+                    onComplete = vars.cards.showCardBacks;
+                }
+                scene.tweens.add({
+                    targets: c,
+                    delay: 1750,
+                    scaleX: 0,
+                    duration: duration,
+                    onComplete: onComplete
+                })
+            })
+        },
+
+        checkForPair: function() {
+            if (vars.DEBUG===true) { console.log('Checking for pair...'); }
+            let cV = vars.cards;
+            let aV = vars.audio;
+            let gV = vars.game;
+            gV.moves++;
+    
+            // do we have a pair?
+            let card1 = cV.selected[0][0]; let card2 = cV.selected[1][0];
+            if (card1===card2) { // YES
+                // update the found count
+                cV.pairsLeft[0]--;
+                if (cV.pairsLeft[0]>0) { // do we have pairs still to find?
+                    // play yes sound
+                    aV.playSound('yes');
+                } else { // all pairs found!
+                    // play win sound
+                    aV.playSound('win');
+                    // create the win message
+                    let wellDone = scene.add.bitmapText(50, 450, 'batFont', 'Well Done!\n\nYou completed it in\n\n' + gV.moves + ' moves!', 64, 1).setAlpha(0).setName('wellDone');
+                    scene.tweens.add({
+                        targets: wellDone,
+                        delay: 3000, // <== the time for the cards to move to the win position on screen
+                        alpha: 1,
+                        y: 100,
+                        duration: 4000
+                    })
+                    let playAgain = scene.add.bitmapText(150, 550, 'batFont', '@ Play Again? @', 64, 1).setAlpha(0).setName('playAgain').setTint(0xffff00).setInteractive();
+                    scene.tweens.add({
+                        targets: playAgain,
+                        delay: 7000, // <== the time for the cards to move to the win position on screen
+                        alpha: 1,
+                        duration: 1000
+                    })
+                }
+                // send the 2 cards to the found group
+                if (vars.DEBUG===true) { console.log('Pair found!'); }
+                vars.animate.cardsToFound(card1);
+            } else { // NO
+                // turn the 2 cards back over
+                if (vars.DEBUG===true) { console.log('This ISNT a pair :('); }
+                // play no sound
+                aV.playSound('no');
+                vars.animate.toDefaultState();
+            }
+    
+            // next empty out the selected array
+            cV.selected=[];
+            cV.selectedPair=[];
         },
 
         showCardBacks: function() {
@@ -208,58 +278,74 @@ var vars = {
     },
 
     game: {
-        moves: 0
+        moves: 0,
+
+        init: function() {
+            let cV = vars.cards;
+            let xyOffset = 10;
+            let xInc = cV.cardWidth+xyOffset;
+            let yInc = cV.cardHeight+xyOffset;
+            let cardSet = vars.imageSets.current;
+            let cardArray = cV.cardArray;
+            let cardPosArray = cV.cardPosArray;
+            let cCX = cV.cardWidth/2 + 10;
+            let cCY = cV.cardHeight/2 + 10;
+
+            for (let c=0; c<9; c++) {
+                let index = Phaser.Math.RND.between(0, cardArray.length-1);
+                index = cardArray.splice(index,1); // remove the card from the array
+
+                // get 2 positions from the positions array
+                let pos1 = Phaser.Math.RND.between(0, cardPosArray.length-1);
+                pos1 = cardPosArray.splice(pos1,1);
+                if (vars.DEBUG===true && vars.VERBOSE===true) { console.log('Pos1: ' + pos1); }
+
+                let pos2 = Phaser.Math.RND.between(0, cardPosArray.length-1);
+                pos2 = cardPosArray.splice(pos2,1);
+                if (vars.DEBUG===true && vars.VERBOSE===true) { console.log('Pos2: ' + pos2); }
+
+                // figure out the position on screen for these cards
+                let xPos1 = pos1%6;
+                let yPos1 = ~~(pos1/6);
+                let xPos2 = pos2%6;
+                let yPos2 = ~~(pos2/6);
+
+                // place the 2 cards
+                // card 1
+                let x = xPos1 * xInc + cCX; let y = yPos1 * yInc + cCY;
+                let picA = scene.add.sprite(x,y,cardSet,index).setName('card_' + index + '_a');
+                picA.setData({ cardID: index, pair: 'a', x: x, y: y, xPos: xPos1, yPos: yPos1 }).setInteractive();
+                // back of 1st card pair
+                let cardBackA = scene.add.sprite(x,y,'cardBack').setScale(0,1).setVisible(false).setName('back_' + index + '_a').setInteractive();
+                // card 2
+                x = xPos2 * xInc + cCX; y = yPos2 * yInc + cCY;
+                let picB = scene.add.sprite(x,y,cardSet,index).setName('card_' + index + '_b');
+                picB.setData({ cardID: index, pair: 'b', x: x, y: y, xPos: xPos2, yPos: yPos2, visible: true }).setInteractive();
+                // back of 2nd card pair
+                let cardBackB = scene.add.sprite(x,y,'cardBack').setScale(0,1).setVisible(false).setName('back_' + index + '_b').setInteractive();
+
+                scene.groups.cardsGroup.addMultiple([picA,picB]);
+                scene.groups.cardBacksGroup.addMultiple([cardBackA,cardBackB]);
+            }
+        }
     },
 
-    checkForPair: function() {
-        if (vars.DEBUG===true) { console.log('Checking for pair...'); }
-        let cV = vars.cards;
-        let aV = vars.audio;
-        let gV = vars.game;
-        gV.moves++;
+    input: {
+        enabled: true,
 
-        // do we have a pair?
-        let card1 = cV.selected[0][0]; let card2 = cV.selected[1][0];
-        if (card1===card2) { // YES
-            // update the found count
-            cV.pairsLeft[0]--;
-            if (cV.pairsLeft[0]>0) { // do we have pairs still to find?
-                // play yes sound
-                aV.playSound('yes');
-            } else { // all pairs found!
-                // play win sound
-                aV.playSound('win');
-                // create the win message
-                let wellDone = scene.add.bitmapText(50, 450, 'batFont', 'Well Done!\n\nYou completed it in\n\n' + gV.moves + ' moves!', 64, 1).setAlpha(0).setName('wellDone');
-                scene.tweens.add({
-                    targets: wellDone,
-                    delay: 3000, // <== the time for the cards to move to the win position on screen
-                    alpha: 1,
-                    y: 100,
-                    duration: 4000
-                })
-                let playAgain = scene.add.bitmapText(150, 550, 'batFont', '@ Play Again? @', 64, 1).setAlpha(0).setName('playAgain').setTint(0xffff00).setInteractive();
-                scene.tweens.add({
-                    targets: playAgain,
-                    delay: 7000, // <== the time for the cards to move to the win position on screen
-                    alpha: 1,
-                    duration: 1000
-                })
-            }
-            // send the 2 cards to the found group
-            if (vars.DEBUG===true) { console.log('Pair found!'); }
-            vars.animate.cardsToFound(card1);
-        } else { // NO
-            // turn the 2 cards back over
-            if (vars.DEBUG===true) { console.log('This ISNT a pair :('); }
-            // play no sound
-            aV.playSound('no');
-            vars.animate.toDefaultState();
+        init: function() {
+            scene.input.on('gameobjectdown', function (pointer, card) {
+                if (card.name.includes('back')) {
+                    vars.cards.showThisCard(card);
+                } else if (card.name==='playAgain') {
+                    window.location.reload();
+                } else if (card.name==='fullScreenButton') {
+                    if (scene.scale.isFullscreen) { card.setFrame('fullScreen'); scene.scale.stopFullscreen(); } else { card.setFrame('fullScreen2'); scene.scale.startFullscreen(); }
+                } else  {
+                    console.log(card);
+                }
+            });
         }
-
-        // next empty out the selected array
-        cV.selected=[];
-        cV.selectedPair=[];
     }
 
 }
