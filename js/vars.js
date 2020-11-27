@@ -94,13 +94,13 @@ var vars = {
 
             scene.tweens.add({
                 targets: [card1,card2],
-                delay: duration*2,
+                delay: duration*3,
                 scaleX: 0,
                 duration: duration
             })
             scene.tweens.add({
                 targets: [back1,back2],
-                delay: duration*3,
+                delay: duration*4,
                 scaleX: 1,
                 duration: duration,
                 onComplete: vars.input.enable,
@@ -354,8 +354,8 @@ var vars = {
             groups.cardBacksGroup.clear();
 
             // remove well done and play again
-            scene.children.getByName('wellDone').destroy();
-            scene.children.getByName('playAgain').destroy();
+            let wD = scene.children.getByName('wellDone'); // note: if well done is visible, play again will be too. This just allows us to restart mid game
+            if (wD!==null) { scene.children.getByName('wellDone').destroy(); scene.children.getByName('playAgain').destroy(); }
 
             // START THE GAME
             vars.game.init();
