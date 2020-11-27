@@ -8,6 +8,29 @@ var vars = {
         cY: 1080/2,
     },
 
+    files: {
+        batman: {
+            images: [
+                ['cardBack','images/batmanCardBack.png'],
+                ['cardBackAlt','images/batmanCardBackSilver.png'],
+            ],
+            spritesheets: {
+                cards: ['batmanLego','imageSets/batmanLego-ext.png', 200, 260, 1, 2]
+            },
+            sounds: {
+                good: ['batmanYes1.ogg','batmanYes2.ogg','batmanYes3.ogg','batmanYes4.ogg','batmanYes5.ogg'],
+                bad:  ['batmanNo1.ogg','batmanNo2.ogg','batmanNo3.ogg','batmanNo4.ogg','batmanNo5.ogg','batmanNo6.ogg','batmanNo7.ogg'],
+                win:  'batmanWin.ogg'
+            }
+        },
+
+        loadAssets: function() {
+            switch (vars.imageSets.current) {
+                case 'batmanLego': batmanLoader(); break;
+            }
+        }
+    },
+
     imageSets: {
         available: ['batmanLego'],
         current: 'batmanLego'
@@ -15,7 +38,7 @@ var vars = {
 
     animate: {
         cardsToFound: function(_cardNumber) {
-            console.log('Spinning the cards to the found area');
+            if (vars.DEBUG===true) { console.log('Spinning the cards to the found area'); }
             let cardA = scene.children.getByName('card_' + _cardNumber + '_a');
             cardA.setDepth(2);
             let cardB = scene.children.getByName('card_' + _cardNumber + '_b');
@@ -71,15 +94,55 @@ var vars = {
 
             scene.tweens.add({
                 targets: [card1,card2],
+                delay: duration*2,
                 scaleX: 0,
                 duration: duration
             })
             scene.tweens.add({
                 targets: [back1,back2],
-                delay: duration,
+                delay: duration*3,
                 scaleX: 1,
                 duration: duration
             })
+        }
+    },
+
+    audio: {
+        no: [],
+        noUsed: [],
+        win: null,
+        yes: [],
+        yesUsed: [],
+
+        lastSoundCheck: function(__type) {
+            if (vars.audio[__type].length===0) {
+                if (vars.DEBUG===true) { console.log('This was the last ' + __type + ' sound. Resetting the available sounds array'); }
+                vars.audio[__type] = vars.audio[__type + 'Used'];
+                vars.audio[__type + 'Used'] = [];
+            }
+        },
+
+        playSound: function(_type) {
+            let aV = vars.audio;
+            let audioKey = null;
+            if (_type==='yes') {
+                // grab a yes sound
+                audioKey = aV.yes.splice(0,1);
+                aV.yesUsed.push(audioKey);
+            } else if (_type==='no') {
+                // grab a no sound
+                audioKey = aV.no.splice(0,1);
+                aV.noUsed.push(audioKey);
+            } else if (_type==='win') {
+                // play the win sound
+                audioKey = 'win';
+            }
+
+            if (audioKey!==null) {
+                scene.sound.stopAll();
+                scene.sound.play(audioKey);
+                aV.lastSoundCheck(_type);
+            }
         }
     },
 
@@ -88,6 +151,7 @@ var vars = {
         cardPosArray: [],
         cardWidth: 200,
         cardHeight: 260,
+        pairsLeft: [9,9],
         spinDuration: 500,
         spinToOffsets: [1450,150],
         selected: [],
@@ -116,7 +180,7 @@ var vars = {
         },
 
         showThisCard: function(_card) {
-            console.log('Showing This card');
+            if (vars.DEBUG===true) { console.log('Showing This card'); }
             let cardName = _card.name; // this is the back of the card
             cardName = cardName.match(/\w+_([0-9])_([ab])/);
             cardName = 'card_' + cardName[1] + '_' + cardName[2];
@@ -143,20 +207,53 @@ var vars = {
         }
     },
 
+    game: {
+        moves: 0
+    },
+
     checkForPair: function() {
-        console.log('Checking for pair...');
+        if (vars.DEBUG===true) { console.log('Checking for pair...'); }
         let cV = vars.cards;
+        let aV = vars.audio;
+        let gV = vars.game;
+        gV.moves++;
 
         // do we have a pair?
-        let card1 = cV.selected[0][0];
-        let card2 = cV.selected[1][0];
+        let card1 = cV.selected[0][0]; let card2 = cV.selected[1][0];
         if (card1===card2) { // YES
+            // update the found count
+            cV.pairsLeft[0]--;
+            if (cV.pairsLeft[0]>0) { // do we have pairs still to find?
+                // play yes sound
+                aV.playSound('yes');
+            } else { // all pairs found!
+                // play win sound
+                aV.playSound('win');
+                // create the win message
+                let wellDone = scene.add.bitmapText(50, 450, 'batFont', 'Well Done!\n\nYou completed it in\n\n' + gV.moves + ' moves!', 64, 1).setAlpha(0).setName('wellDone');
+                scene.tweens.add({
+                    targets: wellDone,
+                    delay: 3000, // <== the time for the cards to move to the win position on screen
+                    alpha: 1,
+                    y: 100,
+                    duration: 4000
+                })
+                let playAgain = scene.add.bitmapText(150, 550, 'batFont', '@ Play Again? @', 64, 1).setAlpha(0).setName('playAgain').setTint(0xffff00).setInteractive();
+                scene.tweens.add({
+                    targets: playAgain,
+                    delay: 7000, // <== the time for the cards to move to the win position on screen
+                    alpha: 1,
+                    duration: 1000
+                })
+            }
             // send the 2 cards to the found group
             if (vars.DEBUG===true) { console.log('Pair found!'); }
             vars.animate.cardsToFound(card1);
         } else { // NO
             // turn the 2 cards back over
             if (vars.DEBUG===true) { console.log('This ISNT a pair :('); }
+            // play no sound
+            aV.playSound('no');
             vars.animate.toDefaultState();
         }
 

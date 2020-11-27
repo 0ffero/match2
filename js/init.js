@@ -46,19 +46,15 @@ function preload() {
     scene = this;
     scene.load.setPath('assets');
 
-    // CARDS
-    scene.load.spritesheet('batmanLego', 'imageSets/batmanLego-ext.png', { frameWidth: 200, frameHeight: 260, margin: 1, spacing: 2  });
-    scene.load.image('cardBack', 'images/cardBack.png');
-    scene.load.image('cardBackAlt', 'images/cardBackSilver.png'); // these are used to distinguish between cards a and b. ie it makes the game easier if theyre used
+    scene.load.bitmapFont('batFont', 'fonts/batFont.png', 'fonts/batFont.xml');
 
-    // SOUNDS
-    //scene.load.audio('enemyShoot',       'audio/enemyBlaster.ogg');
+    vars.files.loadAssets();
 
     // UI
     scene.load.image('background', 'images/backgroundBlue.jpg');
 
     // VIDEO
-    //scene.load.video('introVideo', 'video/spaceinvaders.mp4');
+    //scene.load.video('introVideo', 'video/batman.mp4'); <--- this doesnt exist, but for future reference
 }
 
 
@@ -122,13 +118,14 @@ function create() {
 
         scene.groups.cardsGroup.addMultiple([picA,picB]);
         scene.groups.cardBacksGroup.addMultiple([cardBackA,cardBackB]);
-
     }
 
     // INPUT
     scene.input.on('gameobjectdown', function (pointer, card) {
         if (card.name.includes('back')) {
             vars.cards.showThisCard(card);
+        } else if (card.name==='playAgain') {
+            window.location.reload();
         }
     });
 
@@ -149,4 +146,7 @@ function create() {
             onComplete: onComplete
         })
     })
+
+    // Show the welcome message
+    scene.add.bitmapText(50, 900, 'batFont', 'Welcome to Match 2, Caleb\n\nLego Batman Edition', 52, 1).setScale(0.9,1)
 }
