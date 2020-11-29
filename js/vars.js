@@ -116,6 +116,11 @@ var vars = {
             vars.cards.pairsLeft[0]=vars.cards.pairsLeft[1];
         },
 
+        updateBGColour: function() {
+            let lS = window.localStorage;
+            lS.match2_bgColour = vars.game.bgColour;
+        },
+
         updateCardSet: function(_cardSet=null) {
             if (_cardSet===null) { console.warn('You forgot to send the cardSet you wanted!'); return false; }
             let lS = window.localStorage;
@@ -523,13 +528,12 @@ var vars = {
                     vars.game.restart();
                 } else if (card.name==='optionsButton') { 
                     vars.UI.showOptions();
+                } else if (card.name.includes('bgC_')===true) { 
+                    vars.UI.changeBackground(card.name.replace('bgC_','').split('_'));
                 } else if (card.name==='cmd_batmanLego' || card.name==='cmd_starWarsLego') {
                     let reset = vars.localStorage.updateCardSet(card.name.replace('cmd_',''));
                     if (reset===false) {
-                        scene.children.getByName('cmd_batmanLego').destroy();
-                        scene.children.getByName('cmd_starWarsLego').destroy();
-                        scene.children.getByName('optionsBG').setVisible(false);
-                        scene.children.getByName('optionsTitle').setVisible(false);
+                        vars.UI.optionsHide();
                     }
                 } else {
                     if (vars.DEBUG===true) { console.log(card); }
@@ -539,15 +543,44 @@ var vars = {
     },
 
     UI: {
+        changeBackground: function(_selected) {
+            let s = parseInt(_selected[0]); let c = parseInt(_selected[1]); // better safe than sorry
+            let tint = vars.colours.backgrounds[s][c];
+            if (vars.DEBUG===true) { console.log(_selected + ', tint: ' + tint + '('+ s + ',' + c + ')'); }
+            
+            // set the actual tint
+            scene.children.getByName('gameBG').setTint(tint[0]);
+
+            // update the vars
+            vars.game.bgColour = s + ',' + c;
+            vars.localStorage.updateBGColour();
+
+            // hide the options
+            vars.UI.optionsHide();
+        },
+
         draw: function() {
             // Options
             scene.add.image(vars.canvas.cX, vars.canvas.cY, 'whitePixel').setTint(0x000000).setScale(vars.canvas.width, vars.canvas.height).setName('optionsBG').setVisible(false);
 
             // Background Colours
-            
+            let x = 1440; let xInc=180; let realX=x;
+            let y=200; let yInc=180;
+            let m=0;
+
+            for (s of vars.colours.backgrounds) {
+                let l=0;
+                for (c of s) {
+                    realX=x+(l*xInc);
+                    let a = scene.add.image(realX,y,'bgColour').setTint(c[0]).setName('bgC_' + m + '_' + l).setVisible(false).setInteractive().setDepth(11);
+                    scene.groups.bgOptions.add(a);
+                    l++;
+                }
+                m++; y+=yInc; realX=x;
+            }
             
             // Card Set options
-            scene.add.bitmapText(440, 20, 'default', 'Please select a card set...', 72, 1).setTint(0x0092DC).setName('optionsTitle').setVisible(false);
+            scene.add.bitmapText(150, 20, 'default', 'Please select a card set...', 72, 1).setTint(0x0092DC).setName('optionsTitle').setVisible(false);
             // Full Screen Icon
             scene.add.image(1840,1000, 'fullScreenButton').setName('fullScreenButton').setData('fullScreen','false').setInteractive();
             // Options Icon
@@ -577,10 +610,20 @@ var vars = {
                 console.error('Error creating the welcome message!');
             }
         },
+
+        optionsHide: function() {
+            scene.children.getByName('cmd_batmanLego').destroy();
+            scene.children.getByName('cmd_starWarsLego').destroy();
+            scene.children.getByName('optionsBG').setVisible(false);
+            scene.children.getByName('optionsTitle').setVisible(false);
+            scene.groups.bgOptions.children.each( (c)=> { c.setVisible(false); })
+        },
+
         showOptions: function() {
             let UIDepth = 10;
             scene.children.getByName('optionsBG').setVisible(true).setDepth(UIDepth);
             scene.children.getByName('optionsTitle').setVisible(true).setDepth(UIDepth);
+            scene.groups.bgOptions.children.each( (c)=> { c.setVisible(true); })
             let cV = vars.cards;
             let gameTypes=[];
             let xSpacing = [[],[],[-200,200],[-300,0,300]];
@@ -600,15 +643,9 @@ var vars = {
                 gameTypes.push([2,3,2]);
             }
 
-            let x = vars.canvas.cX;
-            let y = 300;
-
-            //console.log(gameTypes);
-            let o=0;
-            let logos = [];
+            let x = 650; let y = 200; let o=0; let logos = [];
             for (gT of gameTypes) {
                 if (vars.DEBUG===true) { console.log('gT is ' + gT); }
-                // figure out x
                 for (let xPos=0; xPos<gT; xPos++) {
                     let xOffset = xSpacing[gT][xPos]; let actualX = x+xOffset;
                     if (vars.DEBUG===true) { console.log('xOffset: ' + xOffset + '. Actual x: ' + actualX + '. y: ' + y); }
@@ -620,14 +657,7 @@ var vars = {
                 y+=200; 
             }
 
-            scene.tweens.add({
-                targets: logos,
-                scale: 0.9,
-                duration: 3000,
-                yoyo: true,
-                ease: 'Bounce',
-                repeat: -1.
-            })
+            scene.tweens.add({ targets: logos, scale: 0.9, duration: 3000, yoyo: true, ease: 'Bounce', repeat: -1 })
         }
     }
 

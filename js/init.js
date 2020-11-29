@@ -47,6 +47,7 @@ function preload() {
 
     // UI
     scene.load.image('background', 'images/backgroundWhite.jpg');
+    scene.load.image('bgColour', 'images/bgColourDefault.png');
     scene.load.atlas('gameButtons', 'images/gameButtons.png', 'images/gameButtons.json');
     scene.load.atlas('fullScreenButton', 'images/fullScreen.png', 'images/fullScreen.json');
     scene.load.image('optionsButton', 'images/options.png');
@@ -73,6 +74,7 @@ function create() {
     scene.groups.cardsGroup = scene.add.group();
     scene.groups.cardBacksGroup = scene.add.group();
     scene.groups.foundGroup = scene.add.group(); // unused
+    scene.groups.bgOptions = scene.add.group();
 
     // DRAW GAME BOARD
     vars.game.init();
