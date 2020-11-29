@@ -8,6 +8,14 @@ var vars = {
         cY: 1080/2,
     },
 
+    colours: {
+        backgrounds: [
+            [[0x440000],[0x990000],[0xcc0000]],
+            [[0x004400],[0x009900],[0x00cc00]],
+            [[0x000044],[0x000099],[0x0000cc]]
+        ]
+    },
+
     durations: {
         moveToWinPosition: 3000,
         playAgain: 1000,
@@ -83,10 +91,18 @@ var vars = {
             if (lS.match2_selectedGame===undefined) {
                 lS.match2_selectedGame='batmanLego';
                 lS.match2_best=999;
+                lS.match2_bgColour='2,0';
                 vars.game.bestScore=999;
             } else {
                 vars.game.bestScore=parseInt(lS.match2_best);
                 vars.imageSets.current = lS.match2_selectedGame;
+            }
+
+            // updates since caleb first played the game
+            if (lS.match2_bgColour===undefined) {
+                lS.match2_bgColour='2,0';
+            } else {
+                vars.game.bgColour= lS.match2_bgColour;
             }
         },
 
@@ -364,6 +380,7 @@ var vars = {
     game: {
         moves: 0,
         bestScore: -1,
+        bgColour: '2,0',
 
         init: function() {
             let cV = vars.cards;
@@ -375,6 +392,11 @@ var vars = {
             let cardPosArray = cV.cardPosArray;
             let cCX = cV.cardWidth/2 + 10;
             let cCY = cV.cardHeight/2 + 10;
+
+            if (scene.children.getByName('gameBG')===null) { 
+                let colour = vars.game.bgColour.split(',');
+                scene.add.image(vars.canvas.cX, vars.canvas.cY, 'background').setName('gameBG').setTint(vars.colours.backgrounds[colour[0]][colour[1]]); 
+            }
 
             for (let c=0; c<9; c++) {
                 let index = Phaser.Math.RND.between(0, cardArray.length-1);
@@ -520,6 +542,11 @@ var vars = {
         draw: function() {
             // Options
             scene.add.image(vars.canvas.cX, vars.canvas.cY, 'whitePixel').setTint(0x000000).setScale(vars.canvas.width, vars.canvas.height).setName('optionsBG').setVisible(false);
+
+            // Background Colours
+            
+            
+            // Card Set options
             scene.add.bitmapText(440, 20, 'default', 'Please select a card set...', 72, 1).setTint(0x0092DC).setName('optionsTitle').setVisible(false);
             // Full Screen Icon
             scene.add.image(1840,1000, 'fullScreenButton').setName('fullScreenButton').setData('fullScreen','false').setInteractive();

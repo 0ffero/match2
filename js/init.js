@@ -46,7 +46,7 @@ function preload() {
     vars.files.loadAssets();
 
     // UI
-    scene.load.image('background', 'images/backgroundBlue.jpg');
+    scene.load.image('background', 'images/backgroundWhite.jpg');
     scene.load.atlas('gameButtons', 'images/gameButtons.png', 'images/gameButtons.json');
     scene.load.atlas('fullScreenButton', 'images/fullScreen.png', 'images/fullScreen.json');
     scene.load.image('optionsButton', 'images/options.png');
@@ -70,10 +70,9 @@ function create() {
     vars.cards.buildDefaultArrays();
 
     scene.groups = {};
-    scene.add.image(vars.canvas.cX, vars.canvas.cY, 'background');
     scene.groups.cardsGroup = scene.add.group();
     scene.groups.cardBacksGroup = scene.add.group();
-    scene.groups.foundFroup = scene.add.group();
+    scene.groups.foundGroup = scene.add.group(); // unused
 
     // DRAW GAME BOARD
     vars.game.init();
