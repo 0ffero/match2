@@ -40,14 +40,18 @@ function preload() {
     scene = this;
     scene.load.setPath('assets');
 
-    scene.load.bitmapFont('batFont', 'fonts/batFont.png', 'fonts/batFont.xml');
+    // Check the local storage
+    vars.localStorage.init();
 
     vars.files.loadAssets();
 
     // UI
     scene.load.image('background', 'images/backgroundBlue.jpg');
+    scene.load.atlas('gameButtons', 'images/gameButtons.png', 'images/gameButtons.json');
     scene.load.atlas('fullScreenButton', 'images/fullScreen.png', 'images/fullScreen.json');
+    scene.load.image('optionsButton', 'images/options.png');
     scene.load.image('restartButton', 'images/reload.png');
+    scene.load.image('whitePixel', 'images/whitePixel.png');
 
     // VIDEO
     //scene.load.video('introVideo', 'video/batman.mp4'); <--- this doesnt exist, but for future reference
@@ -80,11 +84,7 @@ function create() {
     // Flip all the cards face down
     vars.cards.allFaceDown();
 
-    // Full Screen Icon
-    scene.add.image(1840,1000, 'fullScreenButton').setName('fullScreenButton').setData('fullScreen','false').setInteractive();
-    // Restart Icon
-    scene.add.image(1640,1000, 'restartButton').setName('restartButton').setInteractive();
+    // UI
+    vars.UI.draw();
 
-    // Show the welcome message
-    scene.add.bitmapText(50, 900, 'batFont', 'Welcome to Match 2, Caleb\n\nLego Batman Edition', 52, 1).setScale(0.9,1)
 }
