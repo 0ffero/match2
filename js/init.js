@@ -45,6 +45,10 @@ function preload() {
 
     vars.files.loadAssets();
 
+    // Particles
+    scene.load.image('spark0', 'particles/blue.png');
+    scene.load.image('spark1', 'particles/red.png');
+
     // UI
     scene.load.image('background', 'images/backgroundWhite.jpg');
     scene.load.image('bgColour', 'images/bgColourDefault.png');

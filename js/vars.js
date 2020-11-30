@@ -23,6 +23,45 @@ var vars = {
         wellDone: 4000,
     },
 
+    emitters: {
+        create: function() {
+            let p0 = new Phaser.Math.Vector2(0, vars.canvas.height+200);
+            let p1 = new Phaser.Math.Vector2(vars.canvas.width*0.33, vars.canvas.height);
+            let p2 = new Phaser.Math.Vector2(vars.canvas.width*0.66, vars.canvas.height);
+            let p3 = new Phaser.Math.Vector2(vars.canvas.width, vars.canvas.height+200);
+
+            let curve = new Phaser.Curves.CubicBezier(p0, p1, p2, p3);
+
+            let max = 40;
+            let points = [];
+            let tangents = [];
+
+            for (let c=0; c<=max; c++) {
+                let t = curve.getUtoTmapping(c / max);
+                points.push(curve.getPoint(t));
+                tangents.push(curve.getTangent(t));
+            }
+
+            let tempVec = new Phaser.Math.Vector2();
+
+            let spark0 = scene.add.particles('spark0').setName('fw_0');
+            let spark1 = scene.add.particles('spark1').setName('fw_1');
+
+            for (let i=0; i<points.length; i++) {
+                let p = points[i];
+                tempVec.copy(tangents[i]).normalizeRightHand().scale(-32).add(p);
+                let angle = Phaser.Math.RadToDeg(Phaser.Math.Angle.BetweenPoints(p, tempVec));
+                let particles = (i % 2 === 0) ? spark0 : spark1;
+                particles.createEmitter({ x: tempVec.x, y: tempVec.y, alpha: 0.33, angle: angle, speed: { min: -100, max: 1200 }, gravityY: 200, scale: { start: 0.4, end: 0.1 }, lifespan: 800, blendMode: 'SCREEN' });
+            }
+        },
+
+        destroy: function() {
+            scene.children.getByName('fw_0').destroy();
+            scene.children.getByName('fw_1').destroy();
+        }
+    },
+
     files: {
         destroy: {
             images: ['cardBack', 'cardBackAlt'],
@@ -442,6 +481,7 @@ var vars = {
         },
 
         playerWin: function(_gV) {
+            vars.emitters.create();
             vars.localStorage.checkForBestScore();
             // play win sound
             vars.audio.playSound('win');
@@ -495,6 +535,11 @@ var vars = {
             let wD = scene.children.getByName('wellDone'); // note: if well done is visible, play again will be too. This just allows us to restart mid game
             if (wD!==null) { scene.children.getByName('wellDone').destroy(); scene.children.getByName('playAgain').destroy(); }
 
+            // Remove fireworks
+            if (scene.children.getByName('fw_0')) {
+                vars.emitters.destroy();
+            }
+
             // START THE GAME
             vars.game.init();
             vars.cards.allFaceDown();
@@ -532,9 +577,7 @@ var vars = {
                     vars.UI.changeBackground(card.name.replace('bgC_','').split('_'));
                 } else if (card.name==='cmd_batmanLego' || card.name==='cmd_starWarsLego') {
                     let reset = vars.localStorage.updateCardSet(card.name.replace('cmd_',''));
-                    if (reset===false) {
-                        vars.UI.optionsHide();
-                    }
+                    if (reset===false) { vars.UI.optionsHide(); }
                 } else {
                     if (vars.DEBUG===true) { console.log(card); }
                 }
