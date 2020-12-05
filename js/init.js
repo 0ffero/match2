@@ -62,7 +62,7 @@ function preload() {
     scene.load.image('restartButton', 'images/reload.png');
     scene.load.image('whitePixel', 'images/whitePixel.png');
 
-    scene.load.html('nameform', 'html/nameform.html');
+    scene.load.html('nameform', 'html/nameForm.html');
 
     // VIDEO
     //scene.load.video('introVideo', 'video/batman.mp4'); <--- this doesnt exist, but for future reference
