@@ -456,6 +456,8 @@ var vars = {
         bgColour: '2,0',
 
         init: function() {
+            let gV = vars.game;
+            gV.moves=0;
             let cV = vars.cards;
             let xyOffset = 10;
             let xInc = cV.cardWidth+xyOffset;
