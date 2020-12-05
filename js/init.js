@@ -11,6 +11,10 @@ var config = {
     width: vars.canvas.width,
     parent: 'spaceInvasion',
 
+    dom: {
+        createContainer: true
+    },
+
     scale: {
         parent: 'Match 2',
         mode: Phaser.Scale.FIT,
@@ -57,6 +61,8 @@ function preload() {
     scene.load.image('optionsButton', 'images/options.png');
     scene.load.image('restartButton', 'images/reload.png');
     scene.load.image('whitePixel', 'images/whitePixel.png');
+
+    scene.load.html('nameform', 'html/nameform.html');
 
     // VIDEO
     //scene.load.video('introVideo', 'video/batman.mp4'); <--- this doesnt exist, but for future reference

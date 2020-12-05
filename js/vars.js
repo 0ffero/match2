@@ -88,6 +88,34 @@ var vars = {
             }
         },
 
+        dragons: {
+            cardType: 'spritesheet',
+            editionText:'Dragons: Rescue Riders Edition',
+            paragraph: '\n',
+            welcomeData: [50, 900, 80, 1, 1.73, 1],
+            images: [
+                ['cardBack','images/dragonsCardBack.png'],
+                ['cardBackAlt','images/dragonsCardBackSilver.png'],
+            ],
+            cards: {
+                spritesheet: ['dragonsRR', 'imageSets/dragonsRR.png', 200, 260, 1, 2]
+            },
+            font: ['dragonFont','fonts/dragonsRRFont.png','fonts/dragonsRRFont.xml'],
+            sounds: {
+                good: [],
+                bad: [],
+                win: 'dragonsWin.ogg',
+                init: function() {
+                    this.bad = Phaser.Utils.Array.NumberArray(1,17,'dragonsNo','.ogg');
+                    this.good = Phaser.Utils.Array.NumberArray(1,8,'dragonsYes','.ogg');
+                }
+            },
+
+            init: function() {
+                this.sounds.init();
+            }
+        },
+
         starWarsLego: {
             cardType: 'spritesheet',
             editionText: 'Lego Star Wars Edition',
@@ -112,15 +140,16 @@ var vars = {
             let files;
             switch (vars.imageSets.current) {
                 case 'batmanLego': files = vars.files.batman; multiLoader(files); break;
+                case 'dragonsRR': files = vars.files.dragons; files.init(); multiLoader(files); break;
                 case 'starWarsLego': files = vars.files.starWarsLego; multiLoader(files); break;
             }
         }
     },
 
     imageSets: {
-        available: ['batmanLego','starWarsLego'],
-        fileName: ['batman','starWarsLego'],
-        current: 'batmanLego',
+        available: ['batmanLego','starWarsLego', 'dragonsRR'],
+        fileName: ['batman','starWarsLego','dragons'],
+        current: 'dragonsRR',
         currentFName: -1,
     },
 
@@ -304,7 +333,7 @@ var vars = {
         cardPosArray: [],
         cardWidth: 200,
         cardHeight: 260,
-        options: [['cmd_batmanLego','batmanButton'],['cmd_starWarsLego','starWarsButton']],
+        options: [['cmd_batmanLego','batmanButton'],['cmd_starWarsLego','starWarsButton'], ['cmd_dragonsRR', 'dragonsButton']],
         pairsLeft: [9,9],
         spinToOffsets: [1450,150],
         selected: [],
@@ -495,6 +524,11 @@ var vars = {
             } else if (iC==='starWarsLego') {
                 wellDone = scene.add.bitmapText(110, 450, 'starFont', 'Well Done!\nYou completed it in\n' + _gV.moves + ' moves!', 142, 1).setAlpha(0).setName('wellDone');
                 playAgain = scene.add.bitmapText(150, 550, 'starFont', '@ Play Again? @', 142, 1).setAlpha(0).setName('playAgain').setTint(0xffff00).setInteractive();
+            } else if (iC==='dragonsRR') {
+                wellDone = scene.add.bitmapText(110, 450, 'dragonFont', 'Well Done!\nYou completed it in\n' + _gV.moves + ' moves!', 142, 1).setAlpha(0).setName('wellDone').setScale(1.25,1);
+                playAgain = scene.add.bitmapText(250, 550, 'dragonFont', 'Play Again', 142, 1).setAlpha(0).setName('playAgain').setTint(0xffff00).setInteractive().setScale(1.73,1);
+            } else {
+                console.error('** The wellDone and playAgaint wasnt been set up! **')
             }
 
             // show the well done message
@@ -575,7 +609,7 @@ var vars = {
                     vars.UI.showOptions();
                 } else if (card.name.includes('bgC_')===true) { 
                     vars.UI.changeBackground(card.name.replace('bgC_','').split('_'));
-                } else if (card.name==='cmd_batmanLego' || card.name==='cmd_starWarsLego') {
+                } else if (card.name==='cmd_batmanLego' || card.name==='cmd_starWarsLego' || card.name==='cmd_dragonsRR') {
                     let reset = vars.localStorage.updateCardSet(card.name.replace('cmd_',''));
                     if (reset===false) { vars.UI.optionsHide(); }
                 } else {
@@ -585,7 +619,33 @@ var vars = {
         }
     },
 
+    player: {
+        name: 'friend'
+    },
+
     UI: {
+
+        askForName: function() {
+            let nameForm = scene.add.dom(vars.canvas.cX, vars.canvas.cY).createFromCache('nameform').setAlpha(0).setName('nameForm');
+            nameForm.addListener('click');
+            nameForm.getChildByName('cmd_name').select();
+            nameForm.on('click', function (event) {
+                if (event.target.name === 'playButton') {
+                    var username = this.getChildByName('cmd_name');
+                    this.removeListener('click');
+                    this.setVisible(false);
+                    vars.player.name = username.value;
+                }
+            });
+
+            scene.tweens.add({
+                targets: nameForm,
+                alpha: 1,
+                duration: 3000,
+                ease: 'Power3'
+            });
+        },
+
         changeBackground: function(_selected) {
             let s = parseInt(_selected[0]); let c = parseInt(_selected[1]); // better safe than sorry
             let tint = vars.colours.backgrounds[s][c];
