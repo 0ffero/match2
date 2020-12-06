@@ -156,13 +156,14 @@ var vars = {
     localStorage: {
         init: function() {
             let lS = window.localStorage;
+            let gV = vars.game;
             if (lS.match2_selectedGame===undefined) {
                 lS.match2_selectedGame='batmanLego';
                 lS.match2_best=999;
                 lS.match2_bgColour='2,0';
-                vars.game.bestScore=999;
+                gV.bestScore=999;
             } else {
-                vars.game.bestScore=parseInt(lS.match2_best);
+                gV.bestScore=parseInt(lS.match2_best);
                 vars.imageSets.current = lS.match2_selectedGame;
             }
 
@@ -170,18 +171,34 @@ var vars = {
             if (lS.match2_bgColour===undefined) {
                 lS.match2_bgColour='2,0';
             } else {
-                vars.game.bgColour= lS.match2_bgColour;
+                gV.bgColour= lS.match2_bgColour;
+            }
+
+            // score system
+            if (lS.match2_playerScore===undefined) {
+                lS.match2_playerScore=0;
+                gV.score = 0;
+            } else {
+                gV.score = parseInt(lS.match2_playerScore);
             }
         },
 
         checkForBestScore: function() {
             let lS = window.localStorage;
-            if (vars.game.moves<parseInt(lS.match2_best)) {
+            let gV = vars.game;
+            if (gV.moves<parseInt(lS.match2_best)) {
                 let newHighScore = vars.game.moves;
                 lS.match2_best = newHighScore;
-                vars.game.bestScore = newHighScore;
+                gV.bestScore = newHighScore;
             }
             vars.cards.pairsLeft[0]=vars.cards.pairsLeft[1];
+        },
+
+        saveScore: function(_newScore=0) {
+            if (_newScore>0) {
+                let lS = window.localStorage;
+                lS.match2_playerScore=_newScore;
+            }
         },
 
         updateBGColour: function() {
@@ -452,8 +469,33 @@ var vars = {
 
     game: {
         moves: 0,
+        score: -1,
         bestScore: -1,
         bgColour: '2,0',
+
+        getScore: function() {
+            let prize = 0;
+            let gV = vars.game;
+            if (gV.moves===9) {
+                prize = 5000;
+            } else if (gV.moves>=10 && gV.moves<=12) {
+                prize = 2000;
+            } else if (gV.moves===13) {
+                prize = 1500;
+            } else if (gV.moves>=14 && gV.moves<=19) {
+                prize = 500;
+            } else if (gV.moves>=20 && gV.moves<=29) {
+                prize = 250;
+            } else if (gV.moves>=30 && gV.moves<=39) {
+                prize = 200;
+            } else if (gV.moves>=40) {
+                prize = 100;
+            }
+            gV.score+=prize;
+
+            // save the users score
+            vars.localStorage.saveScore(gV.score);
+        },
 
         init: function() {
             let gV = vars.game;
@@ -512,6 +554,7 @@ var vars = {
         },
 
         playerWin: function(_gV) {
+            vars.game.getScore();
             vars.emitters.create();
             vars.localStorage.checkForBestScore();
             // play win sound
@@ -579,6 +622,10 @@ var vars = {
             // START THE GAME
             vars.game.init();
             vars.cards.allFaceDown();
+        },
+
+        updateScore: function() {
+
         }
     },
 
