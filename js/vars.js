@@ -766,6 +766,7 @@ var vars = {
         optionsHide: function() {
             scene.children.getByName('cmd_batmanLego').destroy();
             scene.children.getByName('cmd_starWarsLego').destroy();
+            scene.children.getByName('cmd_dragonsRR').destroy();
             scene.children.getByName('optionsBG').setVisible(false);
             scene.children.getByName('optionsTitle').setVisible(false);
             scene.groups.bgOptions.children.each( (c)=> { c.setVisible(false); })
