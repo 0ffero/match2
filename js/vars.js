@@ -381,6 +381,7 @@ var vars = {
                     gV.firstGame = false;
                 }
             }
+
         },
 
         bonusGiven: function() {
@@ -1502,5 +1503,7 @@ var vars = {
                 }
             }
         },
+
     }
+
 }
