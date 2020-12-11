@@ -1160,14 +1160,17 @@ var vars = {
                 let gV = vars.game;
                 let cV = vars.cards;
                 if (card.name.includes('back')) {
+                    if (vars.input.enabled===false) { return false; }
                     cV.showThisCard(card);
                 } else if (card.name==='playAgain') {
                     gV.restart();
                 } else if (card.name==='fullScreenButton') {
                     if (scene.scale.isFullscreen) { card.setFrame('fullScreen'); scene.scale.stopFullscreen(); } else { card.setFrame('fullScreen2'); scene.scale.startFullscreen(); }
-                } else if (card.name==='restartButton') { 
+                } else if (card.name==='restartButton') {
+                    if (vars.input.enabled===false) { return false; }
                     gV.restart();
-                } else if (card.name==='optionsButton') { 
+                } else if (card.name==='optionsButton') {
+                    if (vars.input.enabled===false) { return false; }
                     vars.UI.showOptions();
                 } else if (card.name.includes('bgC_')===true) { 
                     vars.UI.changeBackground(card.name.replace('bgC_','').split('_'));
