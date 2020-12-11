@@ -92,8 +92,8 @@ const consts = {
         let oPrize = _prize;
 
         let gV = vars.game;
-        if (gV.score + oPrize<100 && gV.firstGame===true) {
-            oPrize = 100-gV.score;
+        if (gV.score + _prize<100 && gV.firstGame===true) {
+            _prize = 100-gV.score;
             vars.localStorage.bonusGiven();
         }
 
