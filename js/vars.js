@@ -735,7 +735,8 @@ var vars = {
         },
 
         playSoundCoin: function() {
-            scene.sound.play('coinAdd');
+            let aVV = vars.audio.volumeOfCoins;
+            scene.sound.play('coinAdd', { volume: aVV } );
         }
     },
 
@@ -959,8 +960,7 @@ var vars = {
             let gV = vars.game;
             if (_score!==null && _score!==undefined) { gV.score += _score; }
             if (_object!==undefined) { gV.score += parseInt(_object[0].getData('prize')); }
-            let aVV = vars.audio.volumeOfCoins;
-            scene.sound.play('coinAdd', { volume: aVV } );
+            vars.audio.playSoundCoin();
 
             // the last coin cleans up the coins group
             if (_object!==undefined && _object[0].getData('lastCoin')===true && _object[0].getData('ignoreClear')===false) { vars.groups.empty('coins'); }
