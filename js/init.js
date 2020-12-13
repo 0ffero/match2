@@ -9,7 +9,7 @@ var config = {
 
     height: vars.canvas.height,
     width: vars.canvas.width,
-    parent: 'Match2',
+    parent: 'spaceInvasion',
 
     dom: {
         createContainer: true
@@ -61,8 +61,6 @@ function preload() {
     scene.load.image('optionsButton', 'images/options.png');
     scene.load.image('restartButton', 'images/reload.png');
     scene.load.image('whitePixel', 'images/whitePixel.png');
-    scene.load.atlas('coinG', 'images/coins.png', 'images/coins.json');
-    scene.load.atlas('coinS', 'images/coinsS.png', 'images/coinsS.json');
 
     scene.load.html('nameform', 'html/nameForm.html');
 
@@ -81,21 +79,15 @@ function preload() {
 */
 function create() {
     vars.cards.buildDefaultArrays();
-    vars.imageSets.init();
 
     scene.groups = {};
     scene.groups.cardsGroup = scene.add.group();
     scene.groups.cardBacksGroup = scene.add.group();
     scene.groups.foundGroup = scene.add.group(); // unused
     scene.groups.bgOptions = scene.add.group();
-    scene.groups.coins = scene.add.group();
-    scene.groups.upgrades = scene.add.group();
 
     // DRAW GAME BOARD
-    vars.game.drawCards();
-
-    // ANIMATIONS
-    vars.animate.init();
+    vars.game.init();
 
     // INPUT
     vars.input.init();
@@ -104,6 +96,6 @@ function create() {
     vars.cards.allFaceDown();
 
     // UI
-    vars.UI.init();
+    vars.UI.draw();
 
 }
