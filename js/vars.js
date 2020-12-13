@@ -125,7 +125,9 @@ const consts = {
 
     getTint: function(__score) {
         let tint = 0xffffff;
-        if (__score >= vars.cards.getCardCost()) { tint = 0xffff00; }
+        let fontData = vars.files.getFileData().font;
+        let fontName = fontData[0];
+        if (__score >= vars.cards.getCardCost() && fontName!=='toyStoryFont') { tint = 0xffff00; }
         return tint;
     }
 }
@@ -277,12 +279,47 @@ var vars = {
             }
         },
 
+        toyStory: {
+            cardType: 'spritesheet',
+            editionText: 'Toy Story Edition',
+            paragraph: '\n',
+            welcomeData: [50, 920, 60, 1, 1.42, 0.95],
+            images: [
+                ['cardBack','images/toyStoryCardBack.png'],
+                ['cardBackAlt','images/toyStoryCardBackSilver.png'],
+            ],
+            cards: {
+                spritesheet: ['toyStory','imageSets/toyStory.png', 200, 260, 1, 2]
+            },
+            font: ['toyStoryFont','fonts/toyStoryFont.png','fonts/toyStoryFont.xml'],
+            sounds: {
+                good: [],
+                bad:  [],
+                win:  'toyStoryWin.ogg',
+
+                init: function() {
+                    this.bad = Phaser.Utils.Array.NumberArray(1,13,'toyStoryNo','.ogg');
+                    this.good = Phaser.Utils.Array.NumberArray(1,12,'toyStoryYes','.ogg');
+                }
+            },
+
+            init: function() {
+                this.sounds.init();
+            }
+        },
+
+        getFileData: function() {
+            let fName = vars.imageSets.currentFName;
+            return vars.files[fName];
+        },
+        
         loadAssets: function() {
             let files;
             switch (vars.imageSets.current) {
                 case 'batmanLego': files = vars.files.batman; multiLoader(files); break;
                 case 'dragonsRR': files = vars.files.dragons; files.init(); multiLoader(files); break;
                 case 'starWarsLego': files = vars.files.starWarsLego; multiLoader(files); break;
+                case 'toyStory': files = vars.files.toyStory; files.init(); multiLoader(files); break;
             }
         }
     },
@@ -297,8 +334,8 @@ var vars = {
     },
 
     imageSets: {
-        available: ['batmanLego','starWarsLego', 'dragonsRR'],
-        fileName: ['batman','starWarsLego','dragons'],
+        available: ['batmanLego','starWarsLego', 'dragonsRR', 'toyStory'],
+        fileName: ['batman','starWarsLego','dragons','toyStory'],
         current: 'dragonsRR',
         currentFName: -1,
 
@@ -746,7 +783,7 @@ var vars = {
         cardPosArray: [],
         cardWidth: 200,
         cardHeight: 260,
-        options: [['cmd_batmanLego','batmanButton'],['cmd_starWarsLego','starWarsButton'], ['cmd_dragonsRR', 'dragonsButton']],
+        options: [['cmd_batmanLego','batmanButton'],['cmd_starWarsLego','starWarsButton'], ['cmd_dragonsRR', 'dragonsButton'], ['cmd_toyStory', 'toyStoryButton']],
         pairsLeft: [9,9],
         spinToOffsets: [1450,150],
         selected: [],
@@ -1082,6 +1119,9 @@ var vars = {
             } else if (iC==='dragonsRR') {
                 wellDone = scene.add.bitmapText(110, 450, 'dragonFont', 'Well Done!\nYou completed it in\n' + _gV.moves + ' moves!', 142, 1).setAlpha(0).setName('wellDone').setScale(1.25,1);
                 playAgain = scene.add.bitmapText(250, 550, 'dragonFont', 'Play Again', 142, 1).setAlpha(0).setName('playAgain').setTint(0xffff00).setInteractive().setScale(1.73,1);
+            } else if (iC==='toyStory') {
+                wellDone = scene.add.bitmapText(110, 450, 'toyStoryFont', 'Well Done!\nYou completed it in\n' + _gV.moves + ' moves!', 82, 1).setAlpha(0).setName('wellDone').setScale(1.25,1);
+                playAgain = scene.add.bitmapText(250, 550, 'toyStoryFont', 'Play Again', 76, 1).setAlpha(0).setName('playAgain').setInteractive().setScale(1.73,1);
             } else {
                 console.error('** The wellDone and playAgaint wasnt been set up! **')
             }
@@ -1177,7 +1217,7 @@ var vars = {
                     vars.UI.showOptions();
                 } else if (card.name.includes('bgC_')===true) { 
                     vars.UI.changeBackground(card.name.replace('bgC_','').split('_'));
-                } else if (card.name==='cmd_batmanLego' || card.name==='cmd_starWarsLego' || card.name==='cmd_dragonsRR') {
+                } else if (card.name==='cmd_batmanLego' || card.name==='cmd_starWarsLego' || card.name==='cmd_dragonsRR' || card.name==='cmd_toyStory') {
                     let reset = vars.localStorage.updateCardSet(card.name.replace('cmd_',''));
                     if (reset===false) { vars.UI.optionsHide(); }
                 } else if (card.name.includes('dif_')) {
@@ -1218,7 +1258,7 @@ var vars = {
             let y=200; let yInc=180;
             let m=0;
 
-            let bGTitle = scene.add.bitmapText(1360, 20, 'default', 'Backgrounds', 72, 1).setTint(0x0092DC).setName('bGTitle').setVisible(false).setDepth(11);
+            let bGTitle = scene.add.bitmapText(1360, 20, 'default', 'Backgrounds', 64, 1).setTint(0x0092DC).setName('bGTitle').setVisible(false).setDepth(11);
             scene.groups.bgOptions.add(bGTitle);
             for (s of vars.colours.backgrounds) {
                 let l=0;
@@ -1266,6 +1306,11 @@ var vars = {
                     fontSize: 100,
                     scale: [0.9,1],
                     xy: [15, -20]
+                },
+                toyStory: {
+                    fontSize: 72,
+                    scale: [0.9,0.85],
+                    xy: [15, -10]
                 }
             }
             let points = vars.game.score;
@@ -1328,7 +1373,7 @@ var vars = {
             let y = 770;
             let x = 1630;
 
-            let difTitle = scene.add.bitmapText(x-135, y-100,'default','DIFFICULTY',42).setDepth(12).setVisible(false);
+            let difTitle = scene.add.bitmapText(x-155, y-100,'default','DIFFICULTY',42).setDepth(12).setVisible(false);
             scene.groups.bgOptions.add(difTitle);
             for (let d of difList) {
                 let frame=1;
@@ -1442,6 +1487,12 @@ var vars = {
                 gameTypes.push([2,3,2]);
             }
 
+            let dupeCount = cV.options.length/2;
+            if (dupeCount>1) {
+                for (let d=1; d<dupeCount; d++) {
+                    gameTypes.push(gameTypes[0]);
+                }
+            }
             let x = 650; let y = 200; let o=0; let logos = [];
             for (gT of gameTypes) {
                 if (vars.DEBUG===true) { console.log('gT is ' + gT); }
@@ -1460,7 +1511,7 @@ var vars = {
         },
 
         showUpgrades: function(_upgradeFor) {
-            if (_upgradeFor!=='batmanLego' && _upgradeFor!=='starWarsLego' && _upgradeFor!=='dragonsRR') {
+            if (_upgradeFor!=='batmanLego' && _upgradeFor!=='starWarsLego' && _upgradeFor!=='dragonsRR' && _upgradeFor!=='toyStory') {
                 console.error(_upgradeFor + ' is invalid!');
                 return false;
             }
@@ -1494,21 +1545,23 @@ var vars = {
             }
 
             if (unlockables.length>0) {
-                let xMin = 120; let xMax = vars.canvas.width-200; let xInc=240;
-                let row=0;
-                let count=0; let cMax = 0;
-                for (unlock of unlockables) {
-                    let x = xMin + (count*xInc);
-                    let y = 250 + (row*300);
-                    let cID = unlockablesIDs[count + (cMax*row)];
-                    console.log('Count: ' + count + ' Showing ' + unlock + ' at ' + x + ',' + y + '. cID: ' + cID);
-                    let u = scene.add.image(x,y,_upgradeFor, cID+base).setName('unlockable').setData({ name: unlock, cID: cID+base }).setDepth(20).setInteractive();
-                    scene.groups.upgrades.add(u);
-
-                    count++;
-
-                    if (x>xMax) { row++; cMax+=count; count=0; console.log('New Row'); }
+                let xMin = 120; let xMax = vars.canvas.width; let xInc=240;
+                let yMin = 235; let yInc = 300;
+                let colMax=~~(xMax/xInc);
+                for (let row=0; row<3; row++) {
+                    for (let col=0; col<colMax; col++) {
+                        let position = col + (row*colMax);
+                        let unlock = unlockables[position];
+                        let frame = position+9;
+                        let x = xMin + (col*xInc);
+                        let y = yMin + (row*yInc);
+                        if (vars.DEBUG===true) { console.log('Position: ' + position + '. Frame: ' + frame + '. xy: ' + x + ',' + y); }
+                        // TODO BEGIN HERE
+                        let u = scene.add.image(x,y,_upgradeFor, frame).setName('unlockable').setData({ name: unlock, cID: frame }).setDepth(20).setInteractive();
+                        scene.groups.upgrades.add(u);
+                    }
                 }
+
             }
         },
 
