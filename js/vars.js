@@ -1,5 +1,142 @@
+const consts = {
+    veryEasy: {
+        points: {
+            //     [low prize --------------------- best prize]
+            //       >40  <=39  <=29   <=19    13   <=12,  9
+            prize: [  20,   40,   100,   150,  200,   300, 500]
+            // coinsS:10    20     50     75   100    150  250
+            // CoinsG: 0     0      0      0    40     60  100
+        },
+        cardBacks: ['cardBack', 'cardBackAlt'],
+        cardCost: 100,
+        coinForPair: 'S',
+        coinWorthG: 5, // only used for wins <=12 (as youd need 150/250 silver coins)
+        coinWorthS: 2,
+        pairWorth: 2
+    },
+    easy: {
+        points: {
+            //     [low prize --------------------- best prize]
+            //       >40  <=39  <=29   <=19    13   <=12,  9
+            prize: [  20,   40,   100,   150,  200,   300, 500]
+            // coinsS:10    20     50     75   100    150  250
+            // CoinsG: 0     0      0      0    40     60  100
+        },
+        cardBacks: ['cardBack', 'cardBack'],
+        cardCost: 100,
+        coinForPair: 'S',
+        coinWorthG: 5, // only used for wins <=12 (as youd need 150/250 silver coins)
+        coinWorthS: 2,
+        pairWorth: 2
+    },
+    normal: {
+        points: {
+            prize:    [100, 200, 250, 500, 1500, 2000, 5000]
+            // coinsS   20   40   50  100,  300   400  1000]
+            // coinsG   10   20   25   50   150   200   500!
+        },
+        cardBacks: ['cardBack', 'cardBack'],
+        cardCost: 1000,
+        coinForPair: 'G',
+        coinWorthG: 10,
+        coinWorthS: 5,
+        pairWorth: 20
+    },
+    hard: {
+        points: {
+            prize: [   100, 100, 100, 200, 500,  1000, 2000]
+            // coinsS   20   20   20   40  100    200   400]
+            // coinsG   10   10   10   20   50    100   200
+        },
+        cardBacks: ['cardBack', 'cardBack'],
+        cardCost: 1000,
+        coinForPair: 'G',
+        coinWorthG: 10,
+        coinWorthS: 5,
+        pairWorth: 10
+    },
+
+    convertMovesToPrize: function() {
+        let prize=0;
+        let gV = vars.game;
+        let difficulty = gV.difficulty;
+        let cDif = consts[difficulty];
+        if (gV.moves===9) { // no cheating!
+            prize = cDif.points.prize[6];
+        } else if (gV.moves<=12) {
+            prize = cDif.points.prize[5];
+        } else if (gV.moves===13) {
+            prize = cDif.points.prize[4];
+        } else if (gV.moves<=19) {
+            prize = cDif.points.prize[3];
+        } else if (gV.moves<=29) {
+            prize = cDif.points.prize[2];
+        } else if (gV.moves<=39) {
+            prize = cDif.points.prize[1];
+        } else if (gV.moves>=40) {
+            prize = cDif.points.prize[0];
+        }
+
+        let cWorthG = cDif.coinWorthG; let cWorthS = cDif.coinWorthS;
+        let coinData = consts.convertPrizeToCoins(cWorthG, cWorthS, prize);
+
+        if (prize>0) {
+            vars.animate.coinsGenerate(coinData);
+        } else {
+            console.warn('WARNING!\nApparently you completed the game in ' + gV.moves + ' moves. Your prize is: ' + prize);
+        }
+    },
+
+    convertPrizeToCoins: function(_gold, _silver, _prize) {
+        console.log('Prize: ' + _prize + ' (s:' + _silver + ', g:' + _gold + ')');
+        let oPrize = _prize;
+
+        let gV = vars.game;
+        if (gV.score + _prize<100 && gV.firstGame===true) {
+            _prize = 100-gV.score;
+            vars.localStorage.bonusGiven();
+        }
+
+        // figure out the amount of silver and gold coins needed
+        sCoins = 0;
+        if (_prize/_silver>=100) {
+            if (vars.DEBUG===true) { console.log('Generating Gold And Silver'); }
+            sCoins=40; sWorth = sCoins*_silver; _prize -= sWorth; gCoins = _prize/_gold;
+        } else {
+            if (vars.DEBUG===true) { console.log('Generating Silver'); }
+            gCoins=0; sCoins = _prize/_silver;
+        }
+
+        if (vars.DEBUG===true) { console.log(gCoins + ' gold pieces + ' + sCoins + ' silver pieces needed'); }
+
+        let tCoins = gCoins + sCoins;
+
+        // set up the duration, delay and coin volume vars (more coins generate cause more coins to ping around the same time, causing a louder perceived volume, so volume needs to be tuned based on coin count)
+        let duration = 3; let delay = 5;
+        let aV = vars.audio;
+        aV.volumeOfCoins=0.2;
+        if (tCoins >=400) { aV.volumeOfCoins=0.03; delay = 0.5; } else if (tCoins >=200) { aV.volumeOfCoins=0.05; delay = 1.5; } else if (tCoins >=100) { aV.volumeOfCoins=0.1; delay = 2; }
+        if (tCoins>=100) { duration = 2; }
+        duration*=1000;
+
+        if (vars.DEBUG===true) { console.log('Delay: ' + delay + '. Duration: ' + duration); }
+        return { g: gCoins, s: sCoins, gW: _gold, sW: _silver, duration: duration, delay: delay, prize: oPrize }
+    },
+
+    getTint: function(__score) {
+        let tint = 0xffffff;
+        let fontData = vars.files.getFileData().font;
+        let fontName = fontData[0];
+        if (__score >= vars.cards.getCardCost() && fontName!=='toyStoryFont') { tint = 0xffff00; }
+        return tint;
+    }
+}
 var vars = {
     DEBUG: true,
+
+    audio: {
+        volumeOfCoins: 0.2
+    },
 
     canvas: {
         width: 1920,
@@ -14,6 +151,12 @@ var vars = {
             [[0x004400],[0x009900],[0x00cc00]],
             [[0x000044],[0x000099],[0x0000cc]]
         ]
+    },
+
+    convertors: {
+        fromLetterToFrame: function(_letter) {
+            return _letter.charCodeAt(0);
+        }
     },
 
     durations: {
@@ -72,7 +215,7 @@ var vars = {
             cardType: 'spritesheet',
             editionText: 'Lego Batman Edition',
             paragraph: '\n\n',
-            welcomeData: [50, 900, 52, 1, 0.9, 1],
+            welcomeData: [50, 920, 52, 1, 0.9, 1],
             images: [
                 ['cardBack','images/batmanCardBack.png'],
                 ['cardBackAlt','images/batmanCardBackSilver.png'],
@@ -92,7 +235,7 @@ var vars = {
             cardType: 'spritesheet',
             editionText:'Dragons: Rescue Riders Edition',
             paragraph: '\n',
-            welcomeData: [50, 900, 80, 1, 1.73, 1],
+            welcomeData: [50, 905, 80, 1, 1.73, 1],
             images: [
                 ['cardBack','images/dragonsCardBack.png'],
                 ['cardBackAlt','images/dragonsCardBackSilver.png'],
@@ -120,7 +263,7 @@ var vars = {
             cardType: 'spritesheet',
             editionText: 'Lego Star Wars Edition',
             paragraph: '\n',
-            welcomeData: [70,865,100,1,1.1,1],
+            welcomeData: [70,885,100,1,1.1,1],
             images: [
                 ['cardBack','images/sWLCardBack.png'],
                 ['cardBackAlt','images/sWLCardBackSilver.png'],
@@ -146,6 +289,15 @@ var vars = {
         }
     },
 
+    groups: {
+        empty: function(_gName) {
+            let selectedGroup = scene.groups[_gName];
+            selectedGroup.children.each( (c)=> {
+                c.destroy();
+            })
+        }
+    },
+
     imageSets: {
         available: ['batmanLego','starWarsLego', 'dragonsRR'],
         fileName: ['batman','starWarsLego','dragons'],
@@ -156,6 +308,7 @@ var vars = {
     localStorage: {
         init: function() {
             let lS = window.localStorage;
+            let lV = vars.localStorage;
             let gV = vars.game;
             if (lS.match2_selectedGame===undefined) {
                 lS.match2_selectedGame='batmanLego';
@@ -168,18 +321,31 @@ var vars = {
             }
 
             // updates since caleb first played the game
+            // backgrounds
             if (lS.match2_bgColour===undefined) {
                 lS.match2_bgColour='2,0';
             } else {
                 gV.bgColour= lS.match2_bgColour;
             }
 
-            // score system
-            if (lS.match2_playerScore===undefined) {
-                lS.match2_playerScore=0;
+            // difficulty
+            if (lS.match2_difficulty===undefined) {
+                lS.match2_difficulty='veryEasy';
+            } else {
+                gV.difficulty = lS.match2_difficulty;
+            }
+
+            // score system (ie coins)
+            if (lS.match2_playerScoreEVE===undefined) {
+                lS.match2_playerScoreEVE=0;
+                lS.match2_playerScoreNH=0;
                 gV.score = 0;
             } else {
-                gV.score = parseInt(lS.match2_playerScore);
+                if (gV.difficulty.toLowerCase().includes('easy')) {
+                    gV.score = parseInt(lS.match2_playerScoreEVE);
+                } else {
+                    gV.score = parseInt(lS.match2_playerScoreNH);
+                }
             }
         },
 
@@ -341,6 +507,11 @@ var vars = {
                 scene.sound.play(audioKey);
                 aV.lastSoundCheck(_type);
             }
+        },
+
+        playSoundCoin: function() {
+            let aVV = vars.audio.volumeOfCoins;
+            scene.sound.play('coinAdd', { volume: aVV } );
         }
     },
 
@@ -443,7 +614,7 @@ var vars = {
             if (vars.input.enabled===false) { return false; }
             if (vars.DEBUG===true) { console.log('Showing This card'); }
             let cardName = _card.name; // this is the back of the card
-            cardName = cardName.match(/\w+_([0-9])_([ab])/);
+            cardName = cardName.match(/\w+_([0-9]{1,2})_([ab])/);
             cardName = 'card_' + cardName[1] + '_' + cardName[2];
             if (vars.DEBUG===true) { console.log('Looking for ' + cardName); }
             let card = scene.children.getByName(cardName);
@@ -468,6 +639,9 @@ var vars = {
     },
 
     game: {
+        difficulty: 'veryEasy',
+        difficultyOptions: ['veryEasy','easy', 'normal', 'hard'],
+        firstGame: true, // this is a soft variable. If the player has just booted up the game theyll receive extra coins after completing the first game.
         moves: 0,
         score: -1,
         bestScore: -1,
@@ -595,6 +769,10 @@ var vars = {
             })
         },
 
+        reset: function() {
+            scene.registry.destroy(); scene.events.off(); scene.scene.restart();
+        },
+
         restart: function() {
             // CLEAN UP
             // re initialise all the variables
@@ -646,10 +824,12 @@ var vars = {
 
         init: function() {
             scene.input.on('gameobjectdown', function (pointer, card) {
+                let gV = vars.game;
+                let cV = vars.cards;
                 if (card.name.includes('back')) {
                     vars.cards.showThisCard(card);
                 } else if (card.name==='playAgain') {
-                    vars.game.restart();
+                    gV.restart();
                 } else if (card.name==='fullScreenButton') {
                     if (scene.scale.isFullscreen) { card.setFrame('fullScreen'); scene.scale.stopFullscreen(); } else { card.setFrame('fullScreen2'); scene.scale.startFullscreen(); }
                 } else if (card.name==='restartButton') { 
@@ -669,6 +849,7 @@ var vars = {
     },
 
     player: {
+        bonusAwarded: false,
         name: 'friend'
     },
 
@@ -715,20 +896,23 @@ var vars = {
             // Options
             scene.add.image(vars.canvas.cX, vars.canvas.cY, 'whitePixel').setTint(0x000000).setScale(vars.canvas.width, vars.canvas.height).setName('optionsBG').setVisible(false);
 
-            // Background Colours
-            let x = 1440; let xInc=180; let realX=x;
-            let y=200; let yInc=180;
-            let m=0;
+        difficultyOptions: function() {
+            let gV = vars.game;
+            let difList = gV.difficultyOptions;
+            let y = 770;
+            let x = 1630;
 
-            for (s of vars.colours.backgrounds) {
-                let l=0;
-                for (c of s) {
-                    realX=x+(l*xInc);
-                    let a = scene.add.image(realX,y,'bgColour').setTint(c[0]).setName('bgC_' + m + '_' + l).setVisible(false).setInteractive().setDepth(11);
-                    scene.groups.bgOptions.add(a);
-                    l++;
-                }
-                m++; y+=yInc; realX=x;
+            let difTitle = scene.add.bitmapText(x-155, y-100,'default','DIFFICULTY',42).setDepth(12).setVisible(false);
+            scene.groups.bgOptions.add(difTitle);
+            for (let d of difList) {
+                let frame=1;
+                if (d===gV.difficulty) { frame=0; }
+                let a = scene.add.image(x, y, 'difficultyButtons', frame).setDepth(11).setName('dif_' + d).setVisible(false).setInteractive();
+                let difficulty = d.capitalise();
+                if (d==='veryEasy') { difficulty='Very Easy'; }
+                let b = scene.add.bitmapText(x-150,y-25,'default',difficulty,42).setDepth(12).setName('dif_' + d).setVisible(false).setInteractive();
+                scene.groups.bgOptions.addMultiple([a,b]);
+                y+=85;
             }
             
             // Card Set options
@@ -764,9 +948,7 @@ var vars = {
         },
 
         optionsHide: function() {
-            scene.children.getByName('cmd_batmanLego').destroy();
-            scene.children.getByName('cmd_starWarsLego').destroy();
-            scene.children.getByName('cmd_dragonsRR').destroy();
+            for (let c of vars.cards.options) { scene.children.getByName(c[0]).destroy(); }
             scene.children.getByName('optionsBG').setVisible(false);
             scene.children.getByName('optionsTitle').setVisible(false);
             scene.groups.bgOptions.children.each( (c)=> { c.setVisible(false); })
