@@ -1057,10 +1057,10 @@ var vars = {
             let cardDeck = vars.cards.createDeck();
 
             for (let c=0; c<9; c++) {
-                /* let index = Phaser.Math.RND.between(0, cardDeck.length-1);
-                index = cardDeck.splice(index,1); // remove the card from the array */
-                let index = cardDeck[0];
-                index = cardDeck.splice(0,1);
+                let index = Phaser.Math.RND.between(0, cardDeck.length-1);
+                index = cardDeck.splice(index,1); // remove the card from the array
+                /* let index = cardDeck[0];
+                index = cardDeck.splice(0,1); */
 
                 // get 2 positions from the positions array
                 let pos1 = Phaser.Math.RND.between(0, cardPosArray.length-1);
