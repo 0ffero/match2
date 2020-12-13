@@ -9,7 +9,7 @@ var config = {
 
     height: vars.canvas.height,
     width: vars.canvas.width,
-    parent: 'spaceInvasion',
+    parent: 'Match2',
 
     dom: {
         createContainer: true
@@ -92,7 +92,10 @@ function create() {
     scene.groups.upgrades = scene.add.group();
 
     // DRAW GAME BOARD
-    vars.game.init();
+    vars.game.drawCards(); // ?
+
+    // ANIMATIONS
+    vars.animate.init();
 
     // INPUT
     vars.input.init();
@@ -101,6 +104,6 @@ function create() {
     vars.cards.allFaceDown();
 
     // UI
-    vars.UI.draw();
+    vars.UI.init();
 
 }
