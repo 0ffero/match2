@@ -279,12 +279,47 @@ var vars = {
             }
         },
 
+        toyStory: {
+            cardType: 'spritesheet',
+            editionText: 'Toy Story Edition',
+            paragraph: '\n',
+            welcomeData: [50, 920, 60, 1, 1.42, 0.95],
+            images: [
+                ['cardBack','images/toyStoryCardBack.png'],
+                ['cardBackAlt','images/toyStoryCardBackSilver.png'],
+            ],
+            cards: {
+                spritesheet: ['toyStory','imageSets/toyStory.png', 200, 260, 1, 2]
+            },
+            font: ['toyStoryFont','fonts/toyStoryFont.png','fonts/toyStoryFont.xml'],
+            sounds: {
+                good: [],
+                bad:  [],
+                win:  'toyStoryWin.ogg',
+
+                init: function() {
+                    this.bad = Phaser.Utils.Array.NumberArray(1,13,'toyStoryNo','.ogg');
+                    this.good = Phaser.Utils.Array.NumberArray(1,12,'toyStoryYes','.ogg');
+                }
+            },
+
+            init: function() {
+                this.sounds.init();
+            }
+        },
+
+        getFileData: function() {
+            let fName = vars.imageSets.currentFName;
+            return vars.files[fName];
+        },
+        
         loadAssets: function() {
             let files;
             switch (vars.imageSets.current) {
                 case 'batmanLego': files = vars.files.batman; multiLoader(files); break;
                 case 'dragonsRR': files = vars.files.dragons; files.init(); multiLoader(files); break;
                 case 'starWarsLego': files = vars.files.starWarsLego; multiLoader(files); break;
+                case 'toyStory': files = vars.files.toyStory; files.init(); multiLoader(files); break;
             }
         }
     },
@@ -299,10 +334,24 @@ var vars = {
     },
 
     imageSets: {
-        available: ['batmanLego','starWarsLego', 'dragonsRR'],
-        fileName: ['batman','starWarsLego','dragons'],
+        available: ['batmanLego','starWarsLego', 'dragonsRR', 'toyStory'],
+        fileName: ['batman','starWarsLego','dragons','toyStory'],
         current: 'dragonsRR',
         currentFName: -1,
+
+        init: function() {
+            let iSV = vars.imageSets;
+            let avail = iSV.available;
+            let imageSetName = iSV.current;
+            let valid=false;
+            for (let i=0; i<avail.length; i++) {
+                if (avail[i]===imageSetName) { // valid cardSet
+                    iSV.currentFName = iSV.fileName[i];
+                    valid=true; break;
+                }
+            }
+            return valid;
+        }
     },
 
     localStorage: {
@@ -347,6 +396,40 @@ var vars = {
                     gV.score = parseInt(lS.match2_playerScoreNH);
                 }
             }
+
+            // unlocks
+            if (lS.match2_unlocks===undefined) {
+                lS.match2_unlocks='';
+            } else {
+                vars.cards.unlockedStr = '';
+                vars.cards.unlocked = [];
+                let unlocks = lV.convertLSunlocks(lS.match2_unlocks);
+                vars.cards.unlocks = unlocks;
+                vars.cards.unlockedToStr();
+            }
+
+            // player daily bonus
+            if (lS.match2_bonusGiven===undefined) {
+                lS.match2_bonusGiven='10112020';
+                gV.firstGame = true;
+            } else {
+                let cDate = lV.getDate();
+                if (lS.match2_bonusGiven!==cDate) {
+                    gV.firstGame = true;
+                } else {
+                    gV.firstGame = false;
+                }
+            }
+
+        },
+
+        bonusGiven: function() {
+            let gV = vars.game;
+            let lS = window.localStorage;
+            gV.firstGame = false;
+
+            let cDate = vars.localStorage.getDate();
+            lS.match2_bonusGiven = cDate;
         },
 
         checkForBestScore: function() {
@@ -360,11 +443,47 @@ var vars = {
             vars.cards.pairsLeft[0]=vars.cards.pairsLeft[1];
         },
 
-        saveScore: function(_newScore=0) {
-            if (_newScore>0) {
-                let lS = window.localStorage;
-                lS.match2_playerScore=_newScore;
+        convertLSunlocks: function(_unlocks) {
+            let cV = vars.cards;
+            let unlocks = _unlocks.split(';');
+            if (unlocks.length>0) {
+                console.log('Unlocks Found.');
+                for (g of unlocks) {
+                    let unlocks = g.split(',');
+                    if (unlocks[0]!=='') {
+                        let unlocked = [unlocks[0],unlocks[1]];
+                        cV.unlocked.push(unlocked);
+                    }
+                }
             }
+        },
+
+        getDate: function() {
+            let newDate = new Date();
+            let cDate = newDate.getDate().toString() + (newDate.getMonth() + 1).toString() + newDate.getFullYear().toString();
+            return cDate;
+        },
+
+        saveDifficulty: function() {
+            let lS = window.localStorage;
+            lS.match2_difficulty = vars.game.difficulty;
+        },
+
+        saveScore: function(_newScore=0) {
+            if (_newScore>=0) {
+                let lS = window.localStorage;
+                let gV = vars.game;
+                if (gV.difficulty.toLowerCase().includes('easy')) {
+                    lS.match2_playerScoreEVE = _newScore;
+                } else {
+                    lS.match2_playerScoreNH = _newScore;
+                }
+            }
+        },
+
+        saveUnlockedCard: function(_cardName, _cardID) {
+            let lS = window.localStorage;
+            lS.match2_unlocks+=_cardName + ',' + _cardID + ';';
         },
 
         updateBGColour: function() {
@@ -390,8 +509,7 @@ var vars = {
                 for (s of vars.files.destroy.sounds) {
                     scene.cache.audio.remove(s);
                 }
-                // deal with the new deck
-                if (needsReset===true) { scene.registry.destroy(); scene.events.off(); scene.scene.restart(); } else { return false; }
+                if (needsReset===true) { vars.game.reset(); } else { return false; }
             } else {
                 return false;
             }
@@ -399,6 +517,110 @@ var vars = {
     },
 
     animate: {
+        init: function() {
+            let selectedSprite = 'coinG';
+            let frameNames = Phaser.Utils.Array.NumberArray(1,12,'frame');
+            scene.anims.create({
+                key: selectedSprite,
+                frames: scene.anims.generateFrameNumbers(selectedSprite, { frames: frameNames }),
+                frameRate: 12,
+                repeat: -1
+            });
+
+            frameNames = Phaser.Utils.Array.NumberArray(1,12,'frame', 's');
+            selectedSprite = 'coinS';
+            scene.anims.create({
+                key: selectedSprite,
+                frames: scene.anims.generateFrameNumbers(selectedSprite, { frames: frameNames }),
+                frameRate: 12,
+                repeat: -1
+            });
+        },
+
+        coinsGenerate: function(_coinData) {
+            let uiV = vars.UI;
+            let sWorth = _coinData.sW;
+            let gWorth = _coinData.gW;
+            let sCoins = _coinData.s;
+            let gCoins = _coinData.g;
+            let duration = _coinData.duration;
+            let delay = _coinData.delay;
+
+            let xMin = uiV.coinArea[0]; let xMax = uiV.coinArea[1];
+            let dMin = uiV.coinFallDuration[0]; let dMax = duration;
+            let fC = frameCount = 12;
+
+            let goldDelay = 0;
+
+            // create the gold coins
+            if (gCoins>0) {
+                let coin = 'coinG';
+                let oC = vars.game.addCoinToScore;
+
+                for (let g=1; g<=gCoins; g++) {
+                    //if (vars.DEBUG===true) { console.log('Creating gold coin ' + g + ' of ' + gCoins); }
+                    let tDelay = g*16.6667*delay; goldDelay+=16.6667*delay;
+                    let tDuration = Phaser.Math.RND.between(dMin,dMax);
+                    let scale = Phaser.Math.RND.between(40, 60)/100;
+                    let a = scene.add.sprite(Phaser.Math.RND.between(xMin,xMax),-200,coin).setScale(scale).setDepth(5);
+                    a.setData('prize', gWorth);
+                    scene.groups.coins.add(a);
+
+                    let rev = Phaser.Math.RND.between(0,1) === 1 ? true : false;
+                    rev === false ? a.anims.play(coin) : a.anims.playReverse(coin);
+
+                    scene.tweens.add({
+                        targets: a,
+                        delay: tDelay,
+                        key: { min: 1, max: fC },
+                        ease: 'Quad.easeIn',
+                        y: vars.canvas.height+100,
+                        duration: tDuration,
+                        onComplete: oC
+                    })
+                }
+            }
+
+            // create the silver coins
+            if (sCoins>0) { // this check isnt really needed as we always have silver coins
+                let coin = 'coinS';
+                let oC = vars.game.addCoinToScore;
+                let ic=false;
+                let lC = false;
+
+                for (let s=1; s<=sCoins; s++) {
+                    //if (vars.DEBUG===true) { console.log('Creating Silver coin ' + s + ' of ' + sCoins); }
+                    let tDelay = s*16.67777*delay;
+                    let tDuration = Phaser.Math.RND.between(dMin,dMax);
+                    let scale = Phaser.Math.RND.between(40, 60)/100;
+                    let a = scene.add.sprite(Phaser.Math.RND.between(xMin,xMax),-200,coin).setScale(scale).setDepth(5);
+                    if (s===sCoins) {
+                        lC = true;
+                        tDuration = dMax;
+                    }
+                    a.setData({ 'prize': sWorth, 'ignoreClear': ic, 'lastCoin': lC });
+
+                    scene.groups.coins.add(a);
+
+                    let rev = Phaser.Math.RND.between(0,1) === 1 ? true : false;
+                    rev === false ? a.anims.play(coin) : a.anims.playReverse(coin);
+
+                    scene.tweens.add({
+                        targets: a,
+                        delay: tDelay + goldDelay,
+                        key: { min: 1, max: fC },
+                        ease: 'Quad.easeIn',
+                        y: vars.canvas.height+100,
+                        duration: tDuration,
+                        onComplete: oC
+                    })
+                }
+            }
+
+            if (vars.DEBUG===true) { console.log('Gold Delay: ' + goldDelay + '. Volume of coins: ' + vars.audio.volumeOfCoins); }
+
+        },
+
         cardsToFound: function(_cardNumber) {
             if (vars.DEBUG===true) { console.log('Spinning the cards to the found area'); }
             let cardA = scene.children.getByName('card_' + _cardNumber + '_a');
@@ -407,10 +629,11 @@ var vars = {
             cardB.setDepth(1).setTint(0x888888);
 
             let cV = vars.cards;
-            let spinToCol = _cardNumber%3; // col 0, 1 or 2
-            let spinToRow = ~~(_cardNumber/3); // row 0, 1 or 2
+            let cNum = cardA.getData('cNum');
+            let spinToCol = cNum%3; // col 0, 1 or 2
+            let spinToRow = ~~(cNum/3); // row 0, 1 or 2
             let x = cV.spinToOffsets[0] + (spinToCol * (cV.cardWidth/2+60));
-            let y = cV.spinToOffsets[1] + (spinToRow * (cV.cardHeight/2+60));
+            let y = cV.spinToOffsets[1] + (spinToRow * (cV.cardHeight/2+60)) + 30;
 
             let rndAngle = Math.random()*0.5*Phaser.Math.RND.sign();
             rndAngle = ~~(rndAngle*1000)/1000;
@@ -468,6 +691,45 @@ var vars = {
                 duration: duration,
                 onComplete: vars.input.enable,
             })
+        },
+
+        unlockCardSpin: function(_card) {
+            // set the card to bought
+            _card.setData('bought', true);
+
+            // reduce the alpha of all other cards
+            let cardName = _card.getData('name');
+            scene.groups.upgrades.children.each( (c)=> {
+                let cDataName = c.getData('name');
+                console.log(cDataName + ' - ' + cardName);
+                if (cDataName!==cardName) {
+                    if (vars.DEBUG===true) { console.log('Tweening alpha to 0.2'); }
+                    scene.tweens.add({
+                        targets: c,
+                        alpha: 0.2,
+                        duration: 500,
+                    })
+                } else {
+                    console.log('Card Found! Leaving alpha at 1');
+                    c.setDepth(21);
+                }
+            })
+
+            // tween the bought card
+            let finalScale=2;
+            let rotations=4;
+            let x = vars.canvas.cX; let y = vars.canvas.cY;
+            scene.tweens.add({
+                targets: _card,
+                delay: 250,
+                alpha: 1,
+                x: x,
+                y: y,
+                scale: finalScale,
+                rotation: Math.PI*rotations,
+                duration: 2000,
+                onComplete: vars.UI.hideUnlocked
+            })
         }
     },
 
@@ -521,11 +783,13 @@ var vars = {
         cardPosArray: [],
         cardWidth: 200,
         cardHeight: 260,
-        options: [['cmd_batmanLego','batmanButton'],['cmd_starWarsLego','starWarsButton'], ['cmd_dragonsRR', 'dragonsButton']],
+        options: [['cmd_batmanLego','batmanButton'],['cmd_starWarsLego','starWarsButton'], ['cmd_dragonsRR', 'dragonsButton'], ['cmd_toyStory', 'toyStoryButton']],
         pairsLeft: [9,9],
         spinToOffsets: [1450,150],
         selected: [],
         selectedPair: [],
+        unlocked: [],
+        unlockedStr: '',
 
         addCardToSelected: function(_tween,_card) {
             let cV = vars.cards;
@@ -584,6 +848,35 @@ var vars = {
                 // send the 2 cards to the found group
                 if (vars.DEBUG===true) { console.log('Pair found!'); }
                 vars.animate.cardsToFound(card1);
+
+                // spawn 2 gold coins
+                let uiV = vars.UI;
+                let difficulty = gV.difficulty;
+                let coinData = consts[difficulty];
+                let useCoin = consts[difficulty].coinForPair;
+                let coinCount = coinData.pairWorth/coinData['coinWorth' + useCoin];
+                for (b=1; b<=coinCount; b++) {
+                    let oC = vars.game.addCoinToScore;
+
+                    let x = Phaser.Math.RND.between(uiV.coinArea[0],uiV.coinArea[1]);
+                    let s = scene.add.sprite(x,-200,'coin' + useCoin).setScale(0.7).setDepth(3);
+                    s.anims.play('coin' + useCoin);
+                    scene.groups.coins.add(s);
+                    if (cV.pairsLeft[0]===0) { s.setData('ignoreClear', true); }
+                    if (b===2) { s.setData('lastCoin', true); } else { s.setData('lastCoin', false); }
+                    let prize = consts[gV.difficulty]['coinWorth' + useCoin];
+                    s.setData('prize', prize);
+                    let delay = (b-1) * 16.667 * 30;
+                    scene.tweens.add({
+                        targets: s,
+                        delay: delay,
+                        key: { min: 1, max: 12 },
+                        ease: 'Quad.easeIn',
+                        y: vars.canvas.height+100,
+                        duration: 1000,
+                        onComplete: oC
+                    })
+                }
             } else { // NO
                 // turn the 2 cards back over
                 if (vars.DEBUG===true) { console.log('This ISNT a pair :('); }
@@ -595,6 +888,27 @@ var vars = {
             // next empty out the selected array
             cV.selected=[];
             cV.selectedPair=[];
+        },
+
+        createDeck: function() {
+            // get the current unlocked cards
+            let cV = vars.cards;
+            let avail =  Phaser.Utils.Array.NumberArray(0,8);
+            let cDeck = vars.imageSets.currentFName;
+            for (let c of cV.unlocked) { // ?
+                if (c[0].includes(cDeck)) {
+                    avail.push(parseInt(c[1]));
+                }
+            }
+            return shuffle(avail).slice(0,9);
+        },
+
+        drawCards: function() {
+            vars.game.drawCards();
+        },
+
+        getCardCost: function() {
+            return consts[vars.game.difficulty].cardCost;
         },
 
         showCardBacks: function() {
@@ -621,6 +935,8 @@ var vars = {
 
             let duration = vars.durations.turnDuration/2;
 
+            scene.sound.play('cardTurn');
+
             // we now have the back of the card as "_card" and the front as "card"
             scene.tweens.add({
                 targets: _card,
@@ -635,6 +951,36 @@ var vars = {
                 onComplete: vars.cards.addCardToSelected,
                 onCompleteParams: [ card ]
             })
+        },
+
+        unlock: function(_cardID, _cardName) {
+            if (vars.DEBUG===true) { console.log('Card ID: ' + _cardID + '. Card Name: ' + _cardName); }
+            scene.sound.play('unlock');
+            let cV = vars.cards;
+            let gV = vars.game;
+
+            // reduce the players "score" (coins) by the cost of a card
+            let cardCost = vars.cards.getCardCost();
+            gV.score-=cardCost;
+            vars.UI.pointsChange(gV.score);
+
+            // add the unlocked card to the cards var
+            cV.unlocked.push([_cardName, _cardID]);
+
+            // save to the unlocked var
+            vars.localStorage.saveUnlockedCard(_cardName, _cardID);
+            vars.localStorage.saveScore(gV.score);
+        },
+
+        unlockedToStr: function() {
+            let cV = vars.cards;
+            let uArray = cV.unlocked;
+            if (uArray.length>0) {
+                for (u of uArray) {
+                    cV.unlockedStr+=u[0] + ',';
+                }
+                cV.unlockedStr=cV.unlockedStr.slice(0,-1);
+            }
         }
     },
 
@@ -647,51 +993,74 @@ var vars = {
         bestScore: -1,
         bgColour: '2,0',
 
-        getScore: function() {
-            let prize = 0;
+        addCoinToScore: function(_tween, _object, _score) {
             let gV = vars.game;
-            if (gV.moves===9) {
-                prize = 5000;
-            } else if (gV.moves>=10 && gV.moves<=12) {
-                prize = 2000;
-            } else if (gV.moves===13) {
-                prize = 1500;
-            } else if (gV.moves>=14 && gV.moves<=19) {
-                prize = 500;
-            } else if (gV.moves>=20 && gV.moves<=29) {
-                prize = 250;
-            } else if (gV.moves>=30 && gV.moves<=39) {
-                prize = 200;
-            } else if (gV.moves>=40) {
-                prize = 100;
-            }
-            gV.score+=prize;
+            if (_score!==null && _score!==undefined) { gV.score += _score; }
+            if (_object!==undefined) { gV.score += parseInt(_object[0].getData('prize')); }
+            vars.audio.playSoundCoin();
 
-            // save the users score
+            // the last coin cleans up the coins group
+            if (_object!==undefined && _object[0].getData('lastCoin')===true && _object[0].getData('ignoreClear')===false) { vars.groups.empty('coins'); }
+
+            // update the ui to show new total
+            vars.UI.pointsChange(gV.score);
+
+            // save new score
             vars.localStorage.saveScore(gV.score);
         },
 
-        init: function() {
+        checkPlayerCoins: function() {
+            if (vars.game.score>=vars.cards.getCardCost()) {
+                // the player still has enough coins to unlock another card. Fade the other cards back in
+                scene.groups.upgrades.children.each( (c)=> { if (c.getData('bought')!==true) { scene.tweens.add({ targets: c, delay: 0, alpha: 1, duration: 500, }) } })
+                // update the header
+            } else {
+                // player doesnt have enough to unlock another card. Hide the unlock screen
+                vars.UI.hideUpgrades();
+            }
+        },
+
+        difficultyChange: function(_card) {
+            let cName = _card.name.replace('dif_','');
+            let gV = vars.game;
+            if (gV.difficulty!==cName) {
+                gV.difficulty = cName;
+                vars.localStorage.saveDifficulty();
+                // we need to reset the game here
+                vars.game.reset();
+            } else { // player has selected the current difficulty, hide the options screen, nothing else needs done
+                vars.UI.optionsHide();
+            }
+        },
+
+        drawCards: function() {
             let gV = vars.game;
             gV.moves=0;
             let cV = vars.cards;
-            let xyOffset = 10;
+            let xyOffset = 20;
             let xInc = cV.cardWidth+xyOffset;
             let yInc = cV.cardHeight+xyOffset;
+            let yPush = 70;
             let cardSet = vars.imageSets.current;
             let cardArray = cV.cardArray;
             let cardPosArray = cV.cardPosArray;
             let cCX = cV.cardWidth/2 + 10;
             let cCY = cV.cardHeight/2 + 10;
+            let difficulty = gV.difficulty;
+            let cardBacks = consts[difficulty].cardBacks;
 
             if (scene.children.getByName('gameBG')===null) { 
-                let colour = vars.game.bgColour.split(',');
-                scene.add.image(vars.canvas.cX, vars.canvas.cY, 'background').setName('gameBG').setTint(vars.colours.backgrounds[colour[0]][colour[1]]); 
+                let tint = vars.UI.getBGColour();
+                scene.add.image(vars.canvas.cX, vars.canvas.cY, 'background').setName('gameBG').setTint(tint); 
             }
 
+            let cardDeck = vars.cards.createDeck();
+
             for (let c=0; c<9; c++) {
-                let index = Phaser.Math.RND.between(0, cardArray.length-1);
-                index = cardArray.splice(index,1); // remove the card from the array
+                /* let index = Phaser.Math.RND.between(0, cardDeck.length-1);
+                index = cardDeck.splice(index,1); // remove the card from the array */
+                let index = cardDeck[0];
+                index = cardDeck.splice(0,1);
 
                 // get 2 positions from the positions array
                 let pos1 = Phaser.Math.RND.between(0, cardPosArray.length-1);
@@ -710,21 +1079,25 @@ var vars = {
 
                 // place the 2 cards
                 // card 1
-                let x = xPos1 * xInc + cCX; let y = yPos1 * yInc + cCY;
+                let x = xPos1 * xInc + cCX; let y = yPos1 * yInc + cCY; y+=yPush;
                 let picA = scene.add.sprite(x,y,cardSet,index).setName('card_' + index + '_a');
-                picA.setData({ cardID: index, pair: 'a', x: x, y: y, xPos: xPos1, yPos: yPos1 }).setInteractive();
+                picA.setData({ cardID: index, cNum: c, pair: 'a', x: x, y: y, xPos: xPos1, yPos: yPos1 }).setInteractive();
                 // back of 1st card pair
-                let cardBackA = scene.add.sprite(x,y,'cardBack').setScale(0,1).setVisible(false).setName('back_' + index + '_a').setInteractive();
+                let cardBackA = scene.add.sprite(x,y,cardBacks[0]).setScale(0,1).setVisible(false).setName('back_' + index + '_a').setInteractive();
                 // card 2
-                x = xPos2 * xInc + cCX; y = yPos2 * yInc + cCY;
+                x = xPos2 * xInc + cCX; y = yPos2 * yInc + cCY; y+=yPush;
                 let picB = scene.add.sprite(x,y,cardSet,index).setName('card_' + index + '_b');
-                picB.setData({ cardID: index, pair: 'b', x: x, y: y, xPos: xPos2, yPos: yPos2, visible: true }).setInteractive();
+                picB.setData({ cardID: index, cNum: c, pair: 'b', x: x, y: y, xPos: xPos2, yPos: yPos2, visible: true }).setInteractive();
                 // back of 2nd card pair
-                let cardBackB = scene.add.sprite(x,y,'cardBack').setScale(0,1).setVisible(false).setName('back_' + index + '_b').setInteractive();
+                let cardBackB = scene.add.sprite(x,y,cardBacks[1]).setScale(0,1).setVisible(false).setName('back_' + index + '_b').setInteractive();
 
                 scene.groups.cardsGroup.addMultiple([picA,picB]);
                 scene.groups.cardBacksGroup.addMultiple([cardBackA,cardBackB]);
             }
+        },
+
+        getScore: function() {
+            consts.convertMovesToPrize();
         },
 
         playerWin: function(_gV) {
@@ -746,6 +1119,9 @@ var vars = {
             } else if (iC==='dragonsRR') {
                 wellDone = scene.add.bitmapText(110, 450, 'dragonFont', 'Well Done!\nYou completed it in\n' + _gV.moves + ' moves!', 142, 1).setAlpha(0).setName('wellDone').setScale(1.25,1);
                 playAgain = scene.add.bitmapText(250, 550, 'dragonFont', 'Play Again', 142, 1).setAlpha(0).setName('playAgain').setTint(0xffff00).setInteractive().setScale(1.73,1);
+            } else if (iC==='toyStory') {
+                wellDone = scene.add.bitmapText(110, 450, 'toyStoryFont', 'Well Done!\nYou completed it in\n' + _gV.moves + ' moves!', 82, 1).setAlpha(0).setName('wellDone').setScale(1.25,1);
+                playAgain = scene.add.bitmapText(250, 550, 'toyStoryFont', 'Play Again', 76, 1).setAlpha(0).setName('playAgain').setInteractive().setScale(1.73,1);
             } else {
                 console.error('** The wellDone and playAgaint wasnt been set up! **')
             }
@@ -798,7 +1174,7 @@ var vars = {
             }
 
             // START THE GAME
-            vars.game.init();
+            vars.game.drawCards();
             vars.cards.allFaceDown();
         },
 
@@ -827,20 +1203,34 @@ var vars = {
                 let gV = vars.game;
                 let cV = vars.cards;
                 if (card.name.includes('back')) {
-                    vars.cards.showThisCard(card);
+                    if (vars.input.enabled===false) { return false; }
+                    cV.showThisCard(card);
                 } else if (card.name==='playAgain') {
                     gV.restart();
                 } else if (card.name==='fullScreenButton') {
                     if (scene.scale.isFullscreen) { card.setFrame('fullScreen'); scene.scale.stopFullscreen(); } else { card.setFrame('fullScreen2'); scene.scale.startFullscreen(); }
-                } else if (card.name==='restartButton') { 
-                    vars.game.restart();
-                } else if (card.name==='optionsButton') { 
+                } else if (card.name==='restartButton') {
+                    if (vars.input.enabled===false) { return false; }
+                    gV.restart();
+                } else if (card.name==='optionsButton') {
+                    if (vars.input.enabled===false) { return false; }
                     vars.UI.showOptions();
                 } else if (card.name.includes('bgC_')===true) { 
                     vars.UI.changeBackground(card.name.replace('bgC_','').split('_'));
-                } else if (card.name==='cmd_batmanLego' || card.name==='cmd_starWarsLego' || card.name==='cmd_dragonsRR') {
+                } else if (card.name==='cmd_batmanLego' || card.name==='cmd_starWarsLego' || card.name==='cmd_dragonsRR' || card.name==='cmd_toyStory') {
                     let reset = vars.localStorage.updateCardSet(card.name.replace('cmd_',''));
                     if (reset===false) { vars.UI.optionsHide(); }
+                } else if (card.name.includes('dif_')) {
+                    gV.difficultyChange(card);
+                } else if (card.name==='pointsText') {
+                    if (gV.score>=cV.getCardCost()) { vars.UI.showUpgrades(vars.imageSets.current); }
+                } else if (card.name==='unlockable') {
+                    let cardID = card.getData('cID');
+                    let cardName = card.getData('name');
+                    cV.unlock(cardID,cardName);
+                    vars.animate.unlockCardSpin(card);
+                } else if (card.name === 'ulClose') {
+                    vars.UI.hideUpgrades();
                 } else {
                     if (vars.DEBUG===true) { console.log(card); }
                 }
@@ -854,6 +1244,86 @@ var vars = {
     },
 
     UI: {
+
+        backgroundColour: -1,
+        coinArea: [1400,1800],
+        coinFallDuration: [1000,2000],
+
+        init: function() {
+            // Options
+            scene.add.image(vars.canvas.cX, vars.canvas.cY, 'whitePixel').setTint(vars.UI.getBGColour()).setScale(vars.canvas.width, vars.canvas.height).setName('optionsBG').setAlpha(0.99).setVisible(false);
+
+            // Background Colours
+            let x = 1440; let xInc=180; let realX=x;
+            let y=200; let yInc=180;
+            let m=0;
+
+            let bGTitle = scene.add.bitmapText(1360, 20, 'default', 'Backgrounds', 64, 1).setTint(0x0092DC).setName('bGTitle').setVisible(false).setDepth(11);
+            scene.groups.bgOptions.add(bGTitle);
+            for (s of vars.colours.backgrounds) {
+                let l=0;
+                for (c of s) {
+                    realX=x+(l*xInc);
+                    let a = scene.add.image(realX,y,'bgColour').setTint(c[0]).setName('bgC_' + m + '_' + l).setVisible(false).setInteractive().setDepth(11);
+                    scene.groups.bgOptions.add(a);
+                    l++;
+                }
+                m++; y+=yInc; realX=x;
+            }
+
+            // Card Set options
+            scene.add.bitmapText(150, 20, 'default', 'Please select a card set...', 72, 1).setTint(0x0092DC).setName('optionsTitle').setVisible(false);
+            // Full Screen Icon
+            scene.add.image(1840,1000, 'fullScreenButton').setName('fullScreenButton').setData('fullScreen','false').setInteractive();
+            // Options Icon
+            scene.add.image(1430,1000,'optionsButton').setName('optionsButton').setInteractive();
+            // Restart Icon
+            scene.add.image(1640,1000, 'restartButton').setName('restartButton').setInteractive();
+
+            vars.UI.difficultyOptions();
+
+            // Show the Welcome message
+            let iSV = vars.imageSets;
+            let files = vars.files[iSV.currentFName];
+            let fontName = files.font[0];
+            let welcomeMsg = 'Welcome to Match 2, Caleb' + files.paragraph + files.editionText;
+            let wD = files.welcomeData;
+            scene.add.bitmapText(wD[0], wD[1], fontName, welcomeMsg, wD[2], wD[3]).setScale(wD[4],wD[5]).setName('welcomeText');
+
+            // show the players current "points"
+            let data = {
+                batmanLego: {
+                    fontSize: 40,
+                    scale: [1,1.4],
+                    xy: [15, 5]
+                },
+                dragonsRR: {
+                    fontSize: 80,
+                    scale: [1.7,1],
+                    xy: [15, 5]
+                },
+                starWarsLego: {
+                    fontSize: 100,
+                    scale: [0.9,1],
+                    xy: [15, -20]
+                },
+                toyStory: {
+                    fontSize: 72,
+                    scale: [0.9,0.85],
+                    xy: [15, -10]
+                }
+            }
+            let points = vars.game.score;
+            let imageSetName = iSV.current;
+            let fontData = data[imageSetName];
+            let tint = consts.getTint(points);
+            let unlockText = vars.UI.setUnlockText();
+            let pointsText = scene.add.bitmapText(fontData.xy[0], fontData.xy[1], fontName, 'Points: ' + points + unlockText, fontData.fontSize).setTint(tint).setName('pointsText').setScale(fontData.scale[0],fontData.scale[1]);
+            if (unlockText.length>0) { 
+                pointsText.setInteractive();
+            }
+            
+        },
 
         askForName: function() {
             let nameForm = scene.add.dom(vars.canvas.cX, vars.canvas.cY).createFromCache('nameform').setAlpha(0).setName('nameForm');
@@ -892,9 +1362,10 @@ var vars = {
             vars.UI.optionsHide();
         },
 
-        draw: function() {
-            // Options
-            scene.add.image(vars.canvas.cX, vars.canvas.cY, 'whitePixel').setTint(0x000000).setScale(vars.canvas.width, vars.canvas.height).setName('optionsBG').setVisible(false);
+        destroyUnlockedCard: function(_tween, _card) {
+            _card[0].destroy();
+            vars.game.checkPlayerCoins();
+        },
 
         difficultyOptions: function() {
             let gV = vars.game;
@@ -914,37 +1385,41 @@ var vars = {
                 scene.groups.bgOptions.addMultiple([a,b]);
                 y+=85;
             }
-            
-            // Card Set options
-            scene.add.bitmapText(150, 20, 'default', 'Please select a card set...', 72, 1).setTint(0x0092DC).setName('optionsTitle').setVisible(false);
-            // Full Screen Icon
-            scene.add.image(1840,1000, 'fullScreenButton').setName('fullScreenButton').setData('fullScreen','false').setInteractive();
-            // Options Icon
-            scene.add.image(1430,1000,'optionsButton').setName('optionsButton').setInteractive();
-            // Restart Icon
-            scene.add.image(1640,1000, 'restartButton').setName('restartButton').setInteractive();
+        },
 
-            // Show the Welcome message
-            let iSV = vars.imageSets;
-            let avail = iSV.available;
-            let imageSetName = iSV.current;
-            let valid=false;
-            for (let i=0; i<avail.length; i++) {
-                if (avail[i]===imageSetName) { // valid cardSet
-                    iSV.currentFName = iSV.fileName[i];
-                    valid=true; break;
-                }
-            }
-
-            if (valid!==false) {
-                let files = vars.files[iSV.currentFName];
-                let fontName = files.font[0];
-                let welcomeMsg = 'Welcome to Match 2, Caleb' + files.paragraph + files.editionText;
-                let wD = files.welcomeData;
-                scene.add.bitmapText(wD[0], wD[1], fontName, welcomeMsg, wD[2], wD[3]).setScale(wD[4],wD[5]);
+        getBGColour: function() {
+            let uV = vars.UI;
+            if (vars.UI.backgroundColour===-1) {
+                let colour = vars.game.bgColour.split(',');
+                let rColour = vars.colours.backgrounds[colour[0]][colour[1]];
+                uV.backgroundColour = rColour;
+                return rColour;
             } else {
-                console.error('Error creating the welcome message!');
+                return uV.backgroundColour;
             }
+        },
+
+        hideUnlocked: function(_tween, _object) {
+            let card = _object[0];
+            scene.tweens.add({
+                targets: card,
+                delay: 2000,
+                alpha: 0,
+                duration: 2000,
+                onComplete: vars.UI.destroyUnlockedCard
+            })
+        },
+
+        hideUpgrades: function() {
+            // delete everything in the upgrades group
+            scene.groups.upgrades.children.each( (c)=> {
+                c.destroy();
+            })
+            // get rid of the background
+            scene.children.getByName('optionsBG').setVisible(false).setDepth(10);
+
+            // allow user to click on things again
+            vars.input.enable();
         },
 
         optionsHide: function() {
@@ -952,6 +1427,40 @@ var vars = {
             scene.children.getByName('optionsBG').setVisible(false);
             scene.children.getByName('optionsTitle').setVisible(false);
             scene.groups.bgOptions.children.each( (c)=> { c.setVisible(false); })
+        },
+
+        pointsChange: function(_score) {
+            if (Number.isInteger(_score)===true) {
+                let tint = consts.getTint(_score);
+                let unlockText = vars.UI.setUnlockText();
+                let pointsText = scene.children.getByName('pointsText').setText('Points: ' + _score + unlockText).setTint(tint);
+                if (scene.children.getByName('ulHeader')!==null) {
+                    vars.UI.showUpgradesHeader();
+                }
+                if (unlockText.length>0) {
+                    pointsText.setInteractive();
+                } else {
+                    pointsText.disableInteractive();
+                }
+            }
+        },
+
+        setUnlockText: function() {
+            let msg = '';
+            let points = vars.game.score;
+            let cardCost = vars.cards.getCardCost();
+
+            if (points>=cardCost) {
+                let unlocks = ~~(points/cardCost);
+                let multi = 's';
+                if (unlocks===1) { multi=''; }
+                msg = ' (you can unlock ' + unlocks + ' card' + multi + ')';
+                if (scene.children.getByName('ulHeader'!==null)) {
+                    vars.UI.showUpgradesHeader(true);
+                }
+            }
+
+            return msg;
         },
 
         showOptions: function() {
@@ -978,6 +1487,12 @@ var vars = {
                 gameTypes.push([2,3,2]);
             }
 
+            let dupeCount = cV.options.length/2;
+            if (dupeCount>1) {
+                for (let d=1; d<dupeCount; d++) {
+                    gameTypes.push(gameTypes[0]);
+                }
+            }
             let x = 650; let y = 200; let o=0; let logos = [];
             for (gT of gameTypes) {
                 if (vars.DEBUG===true) { console.log('gT is ' + gT); }
@@ -993,7 +1508,75 @@ var vars = {
             }
 
             scene.tweens.add({ targets: logos, scale: 0.9, duration: 3000, yoyo: true, ease: 'Bounce', repeat: -1 })
+        },
+
+        showUpgrades: function(_upgradeFor) {
+            if (_upgradeFor!=='batmanLego' && _upgradeFor!=='starWarsLego' && _upgradeFor!=='dragonsRR' && _upgradeFor!=='toyStory') {
+                console.error(_upgradeFor + ' is invalid!');
+                return false;
+            }
+            vars.input.disable();
+            scene.children.getByName('optionsBG').setVisible(true).setDepth(10);
+
+            // HEADING
+            vars.UI.showUpgradesHeader(false);
+
+            // close button
+            let a = scene.add.image(vars.canvas.cX,vars.canvas.height-50,'difficultyButtons',2).setDepth(20).setName('ulClose').setInteractive();
+            let b = scene.add.bitmapText(vars.canvas.cX-95,vars.canvas.height-80,'default','CLOSE', 48).setDepth(20).setName('ulClose').setInteractive();
+            scene.groups.upgrades.addMultiple([a,b]);
+
+            // how many upgrades for the current game do we have?
+            let total = game.textures.list[_upgradeFor].frameTotal-1;
+            let base = 9; total-=base;
+            // build the unlock list for cards
+            let unlockables = []; let unlockablesIDs = [];
+            if (vars.cards.unlockedStr==='') {
+                vars.cards.unlockedToStr();
+            }
+            let unlockedStr = vars.cards.unlockedStr;
+
+            for (let cID=65; cID<65+total; cID++) {
+                let cName = _upgradeFor + '_' + String.fromCharCode(cID)
+                // check if this card is already unlocked
+                if (!unlockedStr.includes(cName)) {
+                    unlockables.push(cName); unlockablesIDs.push(cID-65);
+                }
+            }
+
+            if (unlockables.length>0) {
+                let xMin = 120; let xMax = vars.canvas.width; let xInc=240;
+                let yMin = 235; let yInc = 300;
+                let colMax=~~(xMax/xInc);
+                for (let row=0; row<3; row++) {
+                    for (let col=0; col<colMax; col++) {
+                        let position = col + (row*colMax);
+                        let unlock = unlockables[position];
+                        let frame = position+9;
+                        let x = xMin + (col*xInc);
+                        let y = yMin + (row*yInc);
+                        if (vars.DEBUG===true) { console.log('Position: ' + position + '. Frame: ' + frame + '. xy: ' + x + ',' + y); }
+                        // TODO BEGIN HERE
+                        let u = scene.add.image(x,y,_upgradeFor, frame).setName('unlockable').setData({ name: unlock, cID: frame }).setDepth(20).setInteractive();
+                        scene.groups.upgrades.add(u);
+                    }
+                }
+
+            }
+        },
+
+        showUpgradesHeader: function(_update) {
+            let unlocksLeft = ~~(vars.game.score/vars.cards.getCardCost());
+            let multi = 'S'
+            if (unlocksLeft===1) { multi = ''; }
+            if (_update===false) {
+                let h = scene.add.bitmapText(30,20,'default','YOU CAN UNLOCK ' + unlocksLeft + ' CARD' + multi,62).setDepth(20).setName('ulHeader');
+                scene.groups.upgrades.add(h);
+            } else {
+                scene.children.getByName('ulHeader').setText('YOU CAN UNLOCK ' + unlocksLeft + ' CARD' + multi);
+            }
         }
+
     }
 
 }
