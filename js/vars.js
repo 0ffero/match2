@@ -364,8 +364,6 @@ var vars = {
             if (lS.match2_unlocks===undefined) {
                 lS.match2_unlocks='';
             } else {
-                vars.cards.unlockedStr = '';
-                vars.cards.unlocked = [];
                 let unlocks = lV.convertLSunlocks(lS.match2_unlocks);
                 vars.cards.unlocks = unlocks;
                 vars.cards.unlockedToStr();
@@ -862,7 +860,7 @@ var vars = {
                     avail.push(parseInt(c[1]));
                 }
             }
-            return shuffle(avail).slice(0,9);
+            return shuffle(avail);
         },
 
         drawCards: function() {
@@ -976,7 +974,6 @@ var vars = {
             if (vars.game.score>=vars.cards.getCardCost()) {
                 // the player still has enough coins to unlock another card. Fade the other cards back in
                 scene.groups.upgrades.children.each( (c)=> { if (c.getData('bought')!==true) { scene.tweens.add({ targets: c, delay: 0, alpha: 1, duration: 500, }) } })
-                // update the header
             } else {
                 // player doesnt have enough to unlock another card. Hide the unlock screen
                 vars.UI.hideUpgrades();
@@ -1017,13 +1014,13 @@ var vars = {
                 scene.add.image(vars.canvas.cX, vars.canvas.cY, 'background').setName('gameBG').setTint(tint); 
             }
 
-            let cardDeck = vars.cards.createDeck();
+            let cardDeck = vars.cards.createDeck().slice(0,9);
 
             for (let c=0; c<9; c++) {
-                let index = Phaser.Math.RND.between(0, cardDeck.length-1);
-                index = cardDeck.splice(index,1); // remove the card from the array
-                /* let index = cardDeck[0];
-                index = cardDeck.splice(0,1); */
+                /* let index = Phaser.Math.RND.between(0, cardDeck.length-1);
+                index = cardDeck.splice(index,1); // remove the card from the array */
+                let index = cardDeck[c];
+                index = cardDeck.splice(0,1);
 
                 // get 2 positions from the positions array
                 let pos1 = Phaser.Math.RND.between(0, cardPosArray.length-1);
@@ -1389,9 +1386,6 @@ var vars = {
                 let tint = consts.getTint(_score);
                 let unlockText = vars.UI.setUnlockText();
                 let pointsText = scene.children.getByName('pointsText').setText('Points: ' + _score + unlockText).setTint(tint);
-                if (scene.children.getByName('ulHeader')!==null) {
-                    vars.UI.showUpgradesHeader();
-                }
                 if (unlockText.length>0) {
                     pointsText.setInteractive();
                 } else {
@@ -1409,10 +1403,7 @@ var vars = {
                 let unlocks = ~~(points/cardCost);
                 let multi = 's';
                 if (unlocks===1) { multi=''; }
-                msg = ' (you can unlock ' + unlocks + ' card' + multi + ')';
-                if (scene.children.getByName('ulHeader'!==null)) {
-                    vars.UI.showUpgradesHeader(true);
-                }
+                msg = ' (you can unlock ' + unlocks + ' card' + multi + ')'
             }
 
             return msg;
@@ -1468,7 +1459,11 @@ var vars = {
             scene.children.getByName('optionsBG').setVisible(true).setDepth(10);
 
             // HEADING
-            vars.UI.showUpgradesHeader(false);
+            let unlocksLeft = ~~(vars.game.score/vars.cards.getCardCost());
+            let multi = 'S'
+            if (unlocksLeft===1) { multi = ''; }
+            let h = scene.add.bitmapText(30,20,'default','YOU CAN UNLOCK ' + unlocksLeft + ' CARD' + multi,62).setDepth(20).setName('ulHeader');
+            scene.groups.upgrades.add(h);
 
             // close button
             let a = scene.add.image(vars.canvas.cX,vars.canvas.height-50,'difficultyButtons',2).setDepth(20).setName('ulClose').setInteractive();
@@ -1511,18 +1506,6 @@ var vars = {
                 }
             }
         },
-
-        showUpgradesHeader: function(_update) {
-            let unlocksLeft = ~~(vars.game.score/vars.cards.getCardCost());
-            let multi = 'S'
-            if (unlocksLeft===1) { multi = ''; }
-            if (_update===false) {
-                let h = scene.add.bitmapText(30,20,'default','YOU CAN UNLOCK ' + unlocksLeft + ' CARD' + multi,62).setDepth(20).setName('ulHeader');
-                scene.groups.upgrades.add(h);
-            } else {
-                scene.children.getByName('ulHeader').setText('YOU CAN UNLOCK ' + unlocksLeft + ' CARD' + multi);
-            }
-        }
 
     }
 
