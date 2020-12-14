@@ -92,7 +92,7 @@ function create() {
     scene.groups.upgrades = scene.add.group();
 
     // DRAW GAME BOARD
-    vars.game.drawCards(); // ?
+    vars.game.drawCards();
 
     // ANIMATIONS
     vars.animate.init();

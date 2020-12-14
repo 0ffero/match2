@@ -16,11 +16,13 @@ function multiLoader(files) {
     scene.load.spritesheet('difficultyButtons', 'images/difficultyButtons-ext.png', { frameWidth: 350, frameHeight: 80, margin: 1, spacing: 2 })
 
     // Load the cards
-    let name = cards[0]; let file = cards[1]; let width = cards[2]; let height = cards[3]; let margin = cards[4]; let spacing = cards[5];
-    scene.load.spritesheet(name, file, { frameWidth: width, frameHeight: height, margin: margin, spacing: spacing })
+    //let name = cards[0]; let file = cards[1]; let width = cards[2]; let height = cards[3]; let margin = cards[4]; let spacing = cards[5];
+    //scene.load.spritesheet(name, file, { frameWidth: width, frameHeight: height, margin: margin, spacing: spacing })
+    let name = cards[0]; let file = cards[1]; let json = cards[2];
+    scene.load.atlas(name, file, json);
 
     // Load the font
-    scene.load.bitmapFont(font[0], font[1], font[2]);
+    scene.load.bitmapFont(font[0] , font[1], font[2]);
     scene.load.bitmapFont('default', 'fonts/default.png', 'fonts/default.xml');
 
     // Load "yes" sounds

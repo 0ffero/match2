@@ -212,7 +212,7 @@ var vars = {
         },
 
         batman: {
-            cardType: 'spritesheet',
+            cardType: 'atlas',
             editionText: 'Lego Batman Edition',
             paragraph: '\n\n',
             welcomeData: [50, 920, 52, 1, 0.9, 1],
@@ -221,7 +221,7 @@ var vars = {
                 ['cardBackAlt','images/batmanCardBackSilver.png'],
             ],
             cards: {
-                spritesheet: ['batmanLego','imageSets/batmanLego.png', 200, 260, 1, 2]
+                atlas: ['batmanLego','imageSets/batmanLego.png','imageSets/batmanLego.json']
             },
             font: ['batFont','fonts/batFont.png','fonts/batFont.xml'],
             sounds: {
@@ -232,7 +232,7 @@ var vars = {
         },
 
         dragons: {
-            cardType: 'spritesheet',
+            cardType: 'atlas',
             editionText:'Dragons: Rescue Riders Edition',
             paragraph: '\n',
             welcomeData: [50, 905, 80, 1, 1.73, 1],
@@ -241,7 +241,7 @@ var vars = {
                 ['cardBackAlt','images/dragonsCardBackSilver.png'],
             ],
             cards: {
-                spritesheet: ['dragonsRR', 'imageSets/dragonsRR.png', 200, 260, 1, 2]
+                atlas: ['dragonsRR','imageSets/dragonsRR.png','imageSets/dragonsRR.json']
             },
             font: ['dragonFont','fonts/dragonsRRFont.png','fonts/dragonsRRFont.xml'],
             sounds: {
@@ -260,7 +260,7 @@ var vars = {
         },
 
         starWarsLego: {
-            cardType: 'spritesheet',
+            cardType: 'atlas',
             editionText: 'Lego Star Wars Edition',
             paragraph: '\n',
             welcomeData: [70,885,100,1,1.1,1],
@@ -269,7 +269,7 @@ var vars = {
                 ['cardBackAlt','images/sWLCardBackSilver.png'],
             ],
             cards: {
-                spritesheet: ['starWarsLego','imageSets/legoStarWars.png', 200, 260, 1, 2]
+                atlas: ['starWarsLego','imageSets/legoStarWars.png','imageSets/legoStarWars.json']
             },
             font: ['starFont','fonts/starFont.png','fonts/starFont.xml'],
             sounds: {
@@ -280,7 +280,7 @@ var vars = {
         },
 
         toyStory: {
-            cardType: 'spritesheet',
+            cardType: 'atlas',
             editionText: 'Toy Story Edition',
             paragraph: '\n',
             welcomeData: [50, 920, 60, 1, 1.42, 0.95],
@@ -289,7 +289,7 @@ var vars = {
                 ['cardBackAlt','images/toyStoryCardBackSilver.png'],
             ],
             cards: {
-                spritesheet: ['toyStory','imageSets/toyStory.png', 200, 260, 1, 2]
+                atlas: ['toyStory','imageSets/toyStory.png','imageSets/toyStory.json']
             },
             font: ['toyStoryFont','fonts/toyStoryFont.png','fonts/toyStoryFont.xml'],
             sounds: {
@@ -495,8 +495,8 @@ var vars = {
             if (_cardSet===null) { console.warn('You forgot to send the cardSet you wanted!'); return false; }
             let lS = window.localStorage;
             let needsReset = false;
-            let possibleDestruction = lS.match2_selectedGame;
-            if (_cardSet!==possibleDestruction) {
+            let currentCardSet = lS.match2_selectedGame;
+            if (_cardSet!==currentCardSet) {
                 // check for valid card set
                 let valid = false;
                 for (avail of vars.imageSets.available) { if (_cardSet===avail) { valid=true; break; } }
@@ -665,11 +665,11 @@ var vars = {
             let selected = cV.selected;
             let selectedPair = cV.selectedPair;
 
-            let card1Name = 'card_' + selected[0][0] + '_' + selectedPair[0];
-            let back1Name = 'back_' + selected[0][0] + '_' + selectedPair[0];
+            let card1Name = 'card_' + selected[0] + '_' + selectedPair[0];
+            let back1Name = 'back_' + selected[0] + '_' + selectedPair[0];
 
-            let card2Name = 'card_' + selected[1][0] + '_' + selectedPair[1];
-            let back2Name = 'back_' + selected[1][0] + '_' + selectedPair[1];
+            let card2Name = 'card_' + selected[1] + '_' + selectedPair[1];
+            let back2Name = 'back_' + selected[1] + '_' + selectedPair[1];
 
             let card1 = scene.children.getByName(card1Name);
             let back1 = scene.children.getByName(back1Name);
@@ -833,7 +833,7 @@ var vars = {
             gV.moves++;
 
             // do we have a pair?
-            let card1 = cV.selected[0][0]; let card2 = cV.selected[1][0];
+            let card1 = cV.selected[0]; let card2 = cV.selected[1];
             if (card1===card2) { // YES
                 // enable input again
                 vars.input.enable();
@@ -1042,7 +1042,7 @@ var vars = {
             let yInc = cV.cardHeight+xyOffset;
             let yPush = 70;
             let cardSet = vars.imageSets.current;
-            let cardArray = cV.cardArray;
+            //let cardArray = cV.cardArray;
             let cardPosArray = cV.cardPosArray;
             let cCX = cV.cardWidth/2 + 10;
             let cCY = cV.cardHeight/2 + 10;
@@ -1057,10 +1057,15 @@ var vars = {
             let cardDeck = vars.cards.createDeck();
 
             for (let c=0; c<9; c++) {
-                /* let index = Phaser.Math.RND.between(0, cardDeck.length-1);
-                index = cardDeck.splice(index,1); // remove the card from the array */
                 let index = cardDeck[0];
-                index = cardDeck.splice(0,1);
+                index = cardDeck.splice(0,1)[0];
+                // convert index to letter
+                let cardLetter=-1
+                if (index>=9) {
+                    cardLetter = String.fromCharCode((index-9)+65);
+                } else {
+                    cardLetter = index.toString();
+                }
 
                 // get 2 positions from the positions array
                 let pos1 = Phaser.Math.RND.between(0, cardPosArray.length-1);
@@ -1072,21 +1077,19 @@ var vars = {
                 if (vars.DEBUG===true && vars.VERBOSE===true) { console.log('Pos2: ' + pos2); }
 
                 // figure out the position on screen for these cards
-                let xPos1 = pos1%6;
-                let yPos1 = ~~(pos1/6);
-                let xPos2 = pos2%6;
-                let yPos2 = ~~(pos2/6);
+                let xPos1 = pos1%6; let yPos1 = ~~(pos1/6);
+                let xPos2 = pos2%6; let yPos2 = ~~(pos2/6);
 
                 // place the 2 cards
                 // card 1
                 let x = xPos1 * xInc + cCX; let y = yPos1 * yInc + cCY; y+=yPush;
-                let picA = scene.add.sprite(x,y,cardSet,index).setName('card_' + index + '_a');
+                let picA = scene.add.sprite(x,y,cardSet,'card' + cardLetter).setName('card_' + index + '_a');
                 picA.setData({ cardID: index, cNum: c, pair: 'a', x: x, y: y, xPos: xPos1, yPos: yPos1 }).setInteractive();
                 // back of 1st card pair
                 let cardBackA = scene.add.sprite(x,y,cardBacks[0]).setScale(0,1).setVisible(false).setName('back_' + index + '_a').setInteractive();
                 // card 2
                 x = xPos2 * xInc + cCX; y = yPos2 * yInc + cCY; y+=yPush;
-                let picB = scene.add.sprite(x,y,cardSet,index).setName('card_' + index + '_b');
+                let picB = scene.add.sprite(x,y,cardSet,'card' + cardLetter).setName('card_' + index + '_b');
                 picB.setData({ cardID: index, cNum: c, pair: 'b', x: x, y: y, xPos: xPos2, yPos: yPos2, visible: true }).setInteractive();
                 // back of 2nd card pair
                 let cardBackB = scene.add.sprite(x,y,cardBacks[1]).setScale(0,1).setVisible(false).setName('back_' + index + '_b').setInteractive();
@@ -1146,7 +1149,7 @@ var vars = {
         },
 
         reset: function() {
-            scene.registry.destroy(); scene.events.off(); scene.scene.restart();
+            scene.registry.destroy(); scene.events.off(); vars.game.restart(); scene.scene.restart();
         },
 
         restart: function() {
@@ -1522,20 +1525,20 @@ var vars = {
             vars.UI.showUpgradesHeader(false);
 
             // close button
-            let a = scene.add.image(vars.canvas.cX,vars.canvas.height-50,'difficultyButtons',2).setDepth(20).setName('ulClose').setInteractive();
+            let a = scene.add.image(vars.canvas.cX,vars.canvas.height-50,'difficultyButtons',0).setDepth(20).setName('ulClose').setInteractive();
             let b = scene.add.bitmapText(vars.canvas.cX-95,vars.canvas.height-80,'default','CLOSE', 48).setDepth(20).setName('ulClose').setInteractive();
             scene.groups.upgrades.addMultiple([a,b]);
 
             // how many upgrades for the current game do we have?
-            let total = game.textures.list[_upgradeFor].frameTotal-1;
+            let total = game.textures.list[_upgradeFor].frameTotal-2;
             let base = 9; total-=base;
             // build the unlock list for cards
-            let unlockables = []; let unlockablesIDs = [];
             if (vars.cards.unlockedStr==='') {
                 vars.cards.unlockedToStr();
             }
             let unlockedStr = vars.cards.unlockedStr;
-
+            
+            let unlockables = [_upgradeFor + '_9']; let unlockablesIDs = [9];
             for (let cID=65; cID<65+total; cID++) {
                 let cName = _upgradeFor + '_' + String.fromCharCode(cID)
                 // check if this card is already unlocked
@@ -1551,14 +1554,22 @@ var vars = {
                 for (let row=0; row<3; row++) {
                     for (let col=0; col<colMax; col++) {
                         let position = col + (row*colMax);
-                        let unlock = unlockables[position];
-                        let frame = position+9;
-                        let x = xMin + (col*xInc);
-                        let y = yMin + (row*yInc);
-                        if (vars.DEBUG===true) { console.log('Position: ' + position + '. Frame: ' + frame + '. xy: ' + x + ',' + y); }
-                        // TODO BEGIN HERE
-                        let u = scene.add.image(x,y,_upgradeFor, frame).setName('unlockable').setData({ name: unlock, cID: frame }).setDepth(20).setInteractive();
-                        scene.groups.upgrades.add(u);
+                        if (position<unlockables.length) {
+                            let unlock = unlockables[position];
+                            let frame = position+9;
+                            let cardLetter = '';
+                            if (frame===9) {
+                                cardLetter = '9';
+                            } else {
+                                cardLetter = String.fromCharCode((position-1)+65);
+                            }
+                            let x = xMin + (col*xInc);
+                            let y = yMin + (row*yInc);
+                            if (vars.DEBUG===true) { console.log('Position: ' + position + '. Frame: ' + frame + '. Card letter: ' + cardLetter + '. xy: ' + x + ',' + y + '. Unlock: ' + unlock); }
+                            // TODO BEGIN HERE
+                            let u = scene.add.image(x,y,_upgradeFor, 'card' + cardLetter).setName('unlockable').setData({ name: unlock, cID: frame }).setDepth(20).setInteractive();
+                            scene.groups.upgrades.add(u);
+                        }
                     }
                 }
 
