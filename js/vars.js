@@ -1316,7 +1316,8 @@ var vars = {
                     xy: [15, -10]
                 }
             }
-            let points = vars.game.score;
+            
+            /* let points = vars.game.score;
             let imageSetName = iSV.current;
             let fontData = data[imageSetName];
             let tint = consts.getTint(points);
@@ -1324,7 +1325,7 @@ var vars = {
             let pointsText = scene.add.bitmapText(fontData.xy[0], fontData.xy[1], fontName, 'Points: ' + points + unlockText, fontData.fontSize).setTint(tint).setName('pointsText').setScale(fontData.scale[0],fontData.scale[1]);
             if (unlockText.length>0) { 
                 pointsText.setInteractive();
-            }
+            } */
             
         },
 
@@ -1433,6 +1434,7 @@ var vars = {
         },
 
         pointsChange: function(_score) {
+            return false;
             if (Number.isInteger(_score)===true) {
                 let tint = consts.getTint(_score);
                 let unlockText = vars.UI.setUnlockText();
