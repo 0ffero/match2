@@ -1,550 +1,21 @@
-const consts = {
-    veryEasy: {
-        points: {
-            //     [low prize --------------------- best prize]
-            //       >40  <=39  <=29   <=19    13   <=12,  9
-            prize: [  20,   40,   100,   150,  200,   300, 500]
-            // coinsS:10    20     50     75   100    150  250
-            // CoinsG: 0     0      0      0    40     60  100
-        },
-        cardBacks: ['cardBack', 'cardBackAlt'],
-        cardCost: 100,
-        coinForPair: 'S',
-        coinWorthG: 5, // only used for wins <=12 (as youd need 150/250 silver coins)
-        coinWorthS: 2,
-        pairWorth: 2
-    },
-    easy: {
-        points: {
-            //     [low prize --------------------- best prize]
-            //       >40  <=39  <=29   <=19    13   <=12,  9
-            prize: [  20,   40,   100,   150,  200,   300, 500]
-            // coinsS:10    20     50     75   100    150  250
-            // CoinsG: 0     0      0      0    40     60  100
-        },
-        cardBacks: ['cardBack', 'cardBack'],
-        cardCost: 100,
-        coinForPair: 'S',
-        coinWorthG: 5, // only used for wins <=12 (as youd need 150/250 silver coins)
-        coinWorthS: 2,
-        pairWorth: 2
-    },
-    normal: {
-        points: {
-            prize:    [100, 200, 250, 500, 1500, 2000, 5000]
-            // coinsS   20   40   50  100,  300   400  1000]
-            // coinsG   10   20   25   50   150   200   500!
-        },
-        cardBacks: ['cardBack', 'cardBack'],
-        cardCost: 1000,
-        coinForPair: 'G',
-        coinWorthG: 10,
-        coinWorthS: 5,
-        pairWorth: 20
-    },
-    hard: {
-        points: {
-            prize: [   100, 100, 100, 200, 500,  1000, 2000]
-            // coinsS   20   20   20   40  100    200   400]
-            // coinsG   10   10   10   20   50    100   200
-        },
-        cardBacks: ['cardBack', 'cardBack'],
-        cardCost: 1000,
-        coinForPair: 'G',
-        coinWorthG: 10,
-        coinWorthS: 5,
-        pairWorth: 10
-    },
-
-    convertMovesToPrize: function() {
-        let prize=0;
-        let gV = vars.game;
-        let difficulty = gV.difficulty;
-        let cDif = consts[difficulty];
-        if (gV.moves===9) { // no cheating!
-            prize = cDif.points.prize[6];
-        } else if (gV.moves<=12) {
-            prize = cDif.points.prize[5];
-        } else if (gV.moves===13) {
-            prize = cDif.points.prize[4];
-        } else if (gV.moves<=19) {
-            prize = cDif.points.prize[3];
-        } else if (gV.moves<=29) {
-            prize = cDif.points.prize[2];
-        } else if (gV.moves<=39) {
-            prize = cDif.points.prize[1];
-        } else if (gV.moves>=40) {
-            prize = cDif.points.prize[0];
-        }
-
-        let cWorthG = cDif.coinWorthG; let cWorthS = cDif.coinWorthS;
-        let coinData = consts.convertPrizeToCoins(cWorthG, cWorthS, prize);
-
-        if (prize>0) {
-            vars.animate.coinsGenerate(coinData);
-        } else {
-            console.warn('WARNING!\nApparently you completed the game in ' + gV.moves + ' moves. Your prize is: ' + prize);
-        }
-    },
-
-    convertPrizeToCoins: function(_gold, _silver, _prize) {
-        console.log('Prize: ' + _prize + ' (s:' + _silver + ', g:' + _gold + ')');
-        let oPrize = _prize;
-
-        let gV = vars.game;
-        if (gV.score + _prize<100 && gV.firstGame===true) {
-            _prize = 100-gV.score;
-            vars.localStorage.bonusGiven();
-        }
-
-        // figure out the amount of silver and gold coins needed
-        sCoins = 0;
-        if (_prize/_silver>=100) {
-            if (vars.DEBUG===true) { console.log('Generating Gold And Silver'); }
-            sCoins=40; sWorth = sCoins*_silver; _prize -= sWorth; gCoins = _prize/_gold;
-        } else {
-            if (vars.DEBUG===true) { console.log('Generating Silver'); }
-            gCoins=0; sCoins = _prize/_silver;
-        }
-
-        if (vars.DEBUG===true) { console.log(gCoins + ' gold pieces + ' + sCoins + ' silver pieces needed'); }
-
-        let tCoins = gCoins + sCoins;
-
-        // set up the duration, delay and coin volume vars (more coins generate cause more coins to ping around the same time, causing a louder perceived volume, so volume needs to be tuned based on coin count)
-        let duration = 3; let delay = 5;
-        let aV = vars.audio;
-        aV.volumeOfCoins=0.2;
-        if (tCoins >=400) { aV.volumeOfCoins=0.03; delay = 0.5; } else if (tCoins >=200) { aV.volumeOfCoins=0.05; delay = 1.5; } else if (tCoins >=100) { aV.volumeOfCoins=0.1; delay = 2; }
-        if (tCoins>=100) { duration = 2; }
-        duration*=1000;
-
-        if (vars.DEBUG===true) { console.log('Delay: ' + delay + '. Duration: ' + duration); }
-        return { g: gCoins, s: sCoins, gW: _gold, sW: _silver, duration: duration, delay: delay, prize: oPrize }
-    },
-
-    getTint: function(__score) {
-        let tint = 0xffffff;
-        let fontData = vars.files.getFileData().font;
-        let fontName = fontData[0];
-        if (__score >= vars.cards.getCardCost() && fontName!=='toyStoryFont') { tint = 0xffff00; }
-        return tint;
-    }
-}
 var vars = {
     DEBUG: true,
-
-    audio: {
-        volumeOfCoins: 0.2
-    },
-
-    canvas: {
-        width: 1920,
-        height: 1080,
-        cX: 1920/2,
-        cY: 1080/2,
-    },
-
-    colours: {
-        backgrounds: [
-            [[0x440000],[0x990000],[0xcc0000]],
-            [[0x004400],[0x009900],[0x00cc00]],
-            [[0x000044],[0x000099],[0x0000cc]]
-        ]
-    },
-
-    convertors: {
-        fromLetterToFrame: function(_letter) {
-            return _letter.charCodeAt(0);
-        }
-    },
-
-    durations: {
-        moveToWinPosition: 3000,
-        playAgain: 1000,
-        turnDuration: 300,
-        wellDone: 4000,
-    },
-
-    emitters: {
-        create: function() {
-            let p0 = new Phaser.Math.Vector2(0, vars.canvas.height+200);
-            let p1 = new Phaser.Math.Vector2(vars.canvas.width*0.33, vars.canvas.height);
-            let p2 = new Phaser.Math.Vector2(vars.canvas.width*0.66, vars.canvas.height);
-            let p3 = new Phaser.Math.Vector2(vars.canvas.width, vars.canvas.height+200);
-
-            let curve = new Phaser.Curves.CubicBezier(p0, p1, p2, p3);
-
-            let max = 40;
-            let points = [];
-            let tangents = [];
-
-            for (let c=0; c<=max; c++) {
-                let t = curve.getUtoTmapping(c / max);
-                points.push(curve.getPoint(t));
-                tangents.push(curve.getTangent(t));
-            }
-
-            let tempVec = new Phaser.Math.Vector2();
-
-            let spark0 = scene.add.particles('spark0').setName('fw_0');
-            let spark1 = scene.add.particles('spark1').setName('fw_1');
-
-            for (let i=0; i<points.length; i++) {
-                let p = points[i];
-                tempVec.copy(tangents[i]).normalizeRightHand().scale(-32).add(p);
-                let angle = Phaser.Math.RadToDeg(Phaser.Math.Angle.BetweenPoints(p, tempVec));
-                let particles = (i % 2 === 0) ? spark0 : spark1;
-                particles.createEmitter({ x: tempVec.x, y: tempVec.y, alpha: 0.33, angle: angle, speed: { min: -100, max: 1200 }, gravityY: 200, scale: { start: 0.4, end: 0.1 }, lifespan: 800, blendMode: 'SCREEN' });
-            }
-        },
-
-        destroy: function() {
-            scene.children.getByName('fw_0').destroy();
-            scene.children.getByName('fw_1').destroy();
-        }
-    },
-
-    files: {
-        destroy: {
-            images: ['cardBack', 'cardBackAlt'],
-            sounds: [],
-        },
-
-        batman: {
-            cardType: 'atlas',
-            editionText: 'Lego Batman Edition',
-            paragraph: '\n\n',
-            welcomeData: [50, 920, 52, 1, 0.9, 1],
-            images: [
-                ['cardBack','images/batmanCardBack.png'],
-                ['cardBackAlt','images/batmanCardBackSilver.png'],
-            ],
-            cards: {
-                atlas: ['batmanLego','imageSets/batmanLego.png','imageSets/batmanLego.json']
-            },
-            font: ['batFont','fonts/batFont.png','fonts/batFont.xml'],
-            sounds: {
-                good: ['batmanYes1.ogg','batmanYes2.ogg','batmanYes3.ogg','batmanYes4.ogg','batmanYes5.ogg'],
-                bad:  ['batmanNo1.ogg','batmanNo2.ogg','batmanNo3.ogg','batmanNo4.ogg','batmanNo5.ogg','batmanNo6.ogg','batmanNo7.ogg'],
-                win:  'batmanWin.ogg'
-            }
-        },
-
-        dragons: {
-            cardType: 'atlas',
-            editionText:'Dragons: Rescue Riders Edition',
-            paragraph: '\n',
-            welcomeData: [50, 905, 80, 1, 1.73, 1],
-            images: [
-                ['cardBack','images/dragonsCardBack.png'],
-                ['cardBackAlt','images/dragonsCardBackSilver.png'],
-            ],
-            cards: {
-                atlas: ['dragonsRR','imageSets/dragonsRR.png','imageSets/dragonsRR.json']
-            },
-            font: ['dragonFont','fonts/dragonsRRFont.png','fonts/dragonsRRFont.xml'],
-            sounds: {
-                good: [],
-                bad: [],
-                win: 'dragonsWin.ogg',
-                init: function() {
-                    this.bad = Phaser.Utils.Array.NumberArray(1,17,'dragonsNo','.ogg');
-                    this.good = Phaser.Utils.Array.NumberArray(1,8,'dragonsYes','.ogg');
-                }
-            },
-
-            init: function() {
-                this.sounds.init();
-            }
-        },
-
-        starWarsLego: {
-            cardType: 'atlas',
-            editionText: 'Lego Star Wars Edition',
-            paragraph: '\n',
-            welcomeData: [70,885,100,1,1.1,1],
-            images: [
-                ['cardBack','images/sWLCardBack.png'],
-                ['cardBackAlt','images/sWLCardBackSilver.png'],
-            ],
-            cards: {
-                atlas: ['starWarsLego','imageSets/legoStarWars.png','imageSets/legoStarWars.json']
-            },
-            font: ['starFont','fonts/starFont.png','fonts/starFont.xml'],
-            sounds: {
-                good: ['starWarsYes1.ogg','starWarsYes2.ogg','starWarsYes3.ogg','starWarsYes4.ogg','starWarsYes5.ogg','starWarsYes6.ogg','starWarsYes7.ogg'],
-                bad:  ['starWarsNo1.ogg','starWarsNo2.ogg','starWarsNo3.ogg','starWarsNo4.ogg','starWarsNo5.ogg','starWarsNo6.ogg','starWarsNo7.ogg','starWarsNo8.ogg','starWarsNo9.ogg'],
-                win:  'starWarsWin.ogg'
-            }
-        },
-
-        toyStory: {
-            cardType: 'atlas',
-            editionText: 'Toy Story Edition',
-            paragraph: '\n',
-            welcomeData: [50, 920, 60, 1, 1.42, 0.95],
-            images: [
-                ['cardBack','images/toyStoryCardBack.png'],
-                ['cardBackAlt','images/toyStoryCardBackSilver.png'],
-            ],
-            cards: {
-                atlas: ['toyStory','imageSets/toyStory.png','imageSets/toyStory.json']
-            },
-            font: ['toyStoryFont','fonts/toyStoryFont.png','fonts/toyStoryFont.xml'],
-            sounds: {
-                good: [],
-                bad:  [],
-                win:  'toyStoryWin.ogg',
-
-                init: function() {
-                    this.bad = Phaser.Utils.Array.NumberArray(1,13,'toyStoryNo','.ogg');
-                    this.good = Phaser.Utils.Array.NumberArray(1,12,'toyStoryYes','.ogg');
-                }
-            },
-
-            init: function() {
-                this.sounds.init();
-            }
-        },
-
-        getFileData: function() {
-            let fName = vars.imageSets.currentFName;
-            return vars.files[fName];
-        },
-        
-        loadAssets: function() {
-            let files;
-            switch (vars.imageSets.current) {
-                case 'batmanLego': files = vars.files.batman; multiLoader(files); break;
-                case 'dragonsRR': files = vars.files.dragons; files.init(); multiLoader(files); break;
-                case 'starWarsLego': files = vars.files.starWarsLego; multiLoader(files); break;
-                case 'toyStory': files = vars.files.toyStory; files.init(); multiLoader(files); break;
-            }
-        }
-    },
-
-    groups: {
-        empty: function(_gName) {
-            let selectedGroup = scene.groups[_gName];
-            selectedGroup.children.each( (c)=> {
-                c.destroy();
-            })
-        }
-    },
-
-    imageSets: {
-        available: ['batmanLego','starWarsLego', 'dragonsRR', 'toyStory'],
-        fileName: ['batman','starWarsLego','dragons','toyStory'],
-        current: 'dragonsRR',
-        currentFName: -1,
-
-        init: function() {
-            let iSV = vars.imageSets;
-            let avail = iSV.available;
-            let imageSetName = iSV.current;
-            let valid=false;
-            for (let i=0; i<avail.length; i++) {
-                if (avail[i]===imageSetName) { // valid cardSet
-                    iSV.currentFName = iSV.fileName[i];
-                    valid=true; break;
-                }
-            }
-            return valid;
-        }
-    },
-
-    localStorage: {
-        init: function() {
-            let lS = window.localStorage;
-            let lV = vars.localStorage;
-            let gV = vars.game;
-            if (lS.match2_selectedGame===undefined) {
-                lS.match2_selectedGame='batmanLego';
-                lS.match2_best=999;
-                lS.match2_bgColour='2,0';
-                gV.bestScore=999;
-            } else {
-                gV.bestScore=parseInt(lS.match2_best);
-                vars.imageSets.current = lS.match2_selectedGame;
-            }
-
-            // updates since caleb first played the game
-            // backgrounds
-            if (lS.match2_bgColour===undefined) {
-                lS.match2_bgColour='2,0';
-            } else {
-                gV.bgColour= lS.match2_bgColour;
-            }
-
-            // difficulty
-            if (lS.match2_difficulty===undefined) {
-                lS.match2_difficulty='veryEasy';
-            } else {
-                gV.difficulty = lS.match2_difficulty;
-            }
-
-            // score system (ie coins)
-            if (lS.match2_playerScoreEVE===undefined) {
-                lS.match2_playerScoreEVE=0;
-                lS.match2_playerScoreNH=0;
-                gV.score = 0;
-            } else {
-                if (gV.difficulty.toLowerCase().includes('easy')) {
-                    gV.score = parseInt(lS.match2_playerScoreEVE);
-                } else {
-                    gV.score = parseInt(lS.match2_playerScoreNH);
-                }
-            }
-
-            // unlocks
-            if (lS.match2_unlocks===undefined) {
-                lS.match2_unlocks='';
-            } else {
-                vars.cards.unlockedStr = '';
-                vars.cards.unlocked = [];
-                let unlocks = lV.convertLSunlocks(lS.match2_unlocks);
-                vars.cards.unlocks = unlocks;
-                vars.cards.unlockedToStr();
-            }
-
-            // player daily bonus
-            if (lS.match2_bonusGiven===undefined) {
-                lS.match2_bonusGiven='10112020';
-                gV.firstGame = true;
-            } else {
-                let cDate = lV.getDate();
-                if (lS.match2_bonusGiven!==cDate) {
-                    gV.firstGame = true;
-                } else {
-                    gV.firstGame = false;
-                }
-            }
-
-        },
-
-        bonusGiven: function() {
-            let gV = vars.game;
-            let lS = window.localStorage;
-            gV.firstGame = false;
-
-            let cDate = vars.localStorage.getDate();
-            lS.match2_bonusGiven = cDate;
-        },
-
-        checkForBestScore: function() {
-            let lS = window.localStorage;
-            let gV = vars.game;
-            if (gV.moves<parseInt(lS.match2_best)) {
-                let newHighScore = vars.game.moves;
-                lS.match2_best = newHighScore;
-                gV.bestScore = newHighScore;
-            }
-            vars.cards.pairsLeft[0]=vars.cards.pairsLeft[1];
-        },
-
-        convertLSunlocks: function(_unlocks) {
-            let cV = vars.cards;
-            let unlocks = _unlocks.split(';');
-            if (unlocks.length>0) {
-                console.log('Unlocks Found.');
-                for (g of unlocks) {
-                    let unlocks = g.split(',');
-                    if (unlocks[0]!=='') {
-                        let unlocked = [unlocks[0],unlocks[1]];
-                        cV.unlocked.push(unlocked);
-                    }
-                }
-            }
-        },
-
-        getDate: function() {
-            let newDate = new Date();
-            let cDate = newDate.getDate().toString() + (newDate.getMonth() + 1).toString() + newDate.getFullYear().toString();
-            return cDate;
-        },
-
-        saveDifficulty: function() {
-            let lS = window.localStorage;
-            lS.match2_difficulty = vars.game.difficulty;
-        },
-
-        saveScore: function(_newScore=0) {
-            if (_newScore>=0) {
-                let lS = window.localStorage;
-                let gV = vars.game;
-                if (gV.difficulty.toLowerCase().includes('easy')) {
-                    lS.match2_playerScoreEVE = _newScore;
-                } else {
-                    lS.match2_playerScoreNH = _newScore;
-                }
-            }
-        },
-
-        saveUnlockedCard: function(_cardName, _cardID) {
-            let lS = window.localStorage;
-            lS.match2_unlocks+=_cardName + ',' + _cardID + ';';
-        },
-
-        updateBGColour: function() {
-            let lS = window.localStorage;
-            lS.match2_bgColour = vars.game.bgColour;
-        },
-
-        updateCardSet: function(_cardSet=null) {
-            if (_cardSet===null) { console.warn('You forgot to send the cardSet you wanted!'); return false; }
-            let lS = window.localStorage;
-            let needsReset = false;
-            let currentCardSet = lS.match2_selectedGame;
-            if (_cardSet!==currentCardSet) {
-                // check for valid card set
-                let valid = false;
-                for (avail of vars.imageSets.available) { if (_cardSet===avail) { valid=true; break; } }
-                // was a valid card set found that wasnt already selected?
-                if (valid===true) { lS.match2_selectedGame=_cardSet; needsReset=true; } else { return false; }
-                // we need to delete the old cardBack and Alt
-                for (image of vars.files.destroy.images) {
-                    scene.textures.removeKey(image);
-                }
-                for (s of vars.files.destroy.sounds) {
-                    scene.cache.audio.remove(s);
-                }
-                if (needsReset===true) { vars.game.reset(); } else { return false; }
-            } else {
-                return false;
-            }
-        }
-    },
 
     animate: {
         init: function() {
             let selectedSprite = 'coinG';
             let frameNames = Phaser.Utils.Array.NumberArray(1,12,'frame');
-            scene.anims.create({
-                key: selectedSprite,
-                frames: scene.anims.generateFrameNumbers(selectedSprite, { frames: frameNames }),
-                frameRate: 12,
-                repeat: -1
-            });
+            scene.anims.create({ key: selectedSprite, frames: scene.anims.generateFrameNumbers(selectedSprite, { frames: frameNames }), frameRate: 12, repeat: -1 });
 
             frameNames = Phaser.Utils.Array.NumberArray(1,12,'frame', 's');
             selectedSprite = 'coinS';
-            scene.anims.create({
-                key: selectedSprite,
-                frames: scene.anims.generateFrameNumbers(selectedSprite, { frames: frameNames }),
-                frameRate: 12,
-                repeat: -1
-            });
+            scene.anims.create({ key: selectedSprite, frames: scene.anims.generateFrameNumbers(selectedSprite, { frames: frameNames }), frameRate: 12, repeat: -1 });
         },
 
         coinsGenerate: function(_coinData) {
             let uiV = vars.UI;
-            let sWorth = _coinData.sW;
-            let gWorth = _coinData.gW;
-            let sCoins = _coinData.s;
-            let gCoins = _coinData.g;
-            let duration = _coinData.duration;
-            let delay = _coinData.delay;
+            let sWorth = _coinData.sW; let gWorth = _coinData.gW; let sCoins = _coinData.s; let gCoins = _coinData.g;
+            let duration = _coinData.duration; let delay = _coinData.delay;
 
             let xMin = uiV.coinArea[0]; let xMax = uiV.coinArea[1];
             let dMin = uiV.coinFallDuration[0]; let dMax = duration;
@@ -569,15 +40,7 @@ var vars = {
                     let rev = Phaser.Math.RND.between(0,1) === 1 ? true : false;
                     rev === false ? a.anims.play(coin) : a.anims.playReverse(coin);
 
-                    scene.tweens.add({
-                        targets: a,
-                        delay: tDelay,
-                        key: { min: 1, max: fC },
-                        ease: 'Quad.easeIn',
-                        y: vars.canvas.height+100,
-                        duration: tDuration,
-                        onComplete: oC
-                    })
+                    scene.tweens.add({ targets: a, delay: tDelay, key: { min: 1, max: fC }, ease: 'Quad.easeIn', y: vars.canvas.height+100, duration: tDuration, onComplete: oC })
                 }
             }
 
@@ -585,8 +48,7 @@ var vars = {
             if (sCoins>0) { // this check isnt really needed as we always have silver coins
                 let coin = 'coinS';
                 let oC = vars.game.addCoinToScore;
-                let ic=false;
-                let lC = false;
+                let ic=false; let lC = false;
 
                 for (let s=1; s<=sCoins; s++) {
                     //if (vars.DEBUG===true) { console.log('Creating Silver coin ' + s + ' of ' + sCoins); }
@@ -594,10 +56,7 @@ var vars = {
                     let tDuration = Phaser.Math.RND.between(dMin,dMax);
                     let scale = Phaser.Math.RND.between(40, 60)/100;
                     let a = scene.add.sprite(Phaser.Math.RND.between(xMin,xMax),-200,coin).setScale(scale).setDepth(5);
-                    if (s===sCoins) {
-                        lC = true;
-                        tDuration = dMax;
-                    }
+                    if (s===sCoins) { lC = true; tDuration = dMax; }
                     a.setData({ 'prize': sWorth, 'ignoreClear': ic, 'lastCoin': lC });
 
                     scene.groups.coins.add(a);
@@ -605,15 +64,7 @@ var vars = {
                     let rev = Phaser.Math.RND.between(0,1) === 1 ? true : false;
                     rev === false ? a.anims.play(coin) : a.anims.playReverse(coin);
 
-                    scene.tweens.add({
-                        targets: a,
-                        delay: tDelay + goldDelay,
-                        key: { min: 1, max: fC },
-                        ease: 'Quad.easeIn',
-                        y: vars.canvas.height+100,
-                        duration: tDuration,
-                        onComplete: oC
-                    })
+                    scene.tweens.add({ targets: a, delay: tDelay + goldDelay, key: { min: 1, max: fC }, ease: 'Quad.easeIn', y: vars.canvas.height+100, duration: tDuration, onComplete: oC })
                 }
             }
 
@@ -640,24 +91,8 @@ var vars = {
             rndAngle += Math.PI*3;
             if (vars.DEBUG===true) { console.log('rndAngle: ' + rndAngle); }
             let duration = vars.durations.moveToWinPosition;
-            scene.tweens.add({
-                targets: cardA,
-                x: x,
-                y: y,
-                scale: 0.5,
-                rotation: Math.PI*3+rndAngle,
-                ease: 'Cubic.easeOut',
-                duration: duration,
-            });
-            scene.tweens.add({
-                targets: cardB,
-                x: x+10,
-                y: y+10,
-                scale: 0.5,
-                rotation: Math.PI*3+rndAngle,
-                ease: 'Cubic.easeOut',
-                duration: duration,
-            });
+            scene.tweens.add({ targets: cardA, x: x, y: y, scale: 0.5, rotation: Math.PI*3+rndAngle, ease: 'Cubic.easeOut', duration: duration });
+            scene.tweens.add({ targets: cardB, x: x+10, y: y+10, scale: 0.5, rotation: Math.PI*3+rndAngle, ease: 'Cubic.easeOut', duration: duration });
         },
 
         toDefaultState: function() {
@@ -665,32 +100,16 @@ var vars = {
             let selected = cV.selected;
             let selectedPair = cV.selectedPair;
 
-            let card1Name = 'card_' + selected[0] + '_' + selectedPair[0];
-            let back1Name = 'back_' + selected[0] + '_' + selectedPair[0];
-
-            let card2Name = 'card_' + selected[1] + '_' + selectedPair[1];
-            let back2Name = 'back_' + selected[1] + '_' + selectedPair[1];
-
-            let card1 = scene.children.getByName(card1Name);
-            let back1 = scene.children.getByName(back1Name);
-            let card2 = scene.children.getByName(card2Name);
-            let back2 = scene.children.getByName(back2Name);
+            let card1Name = 'card_' + selected[0] + '_' + selectedPair[0]; let back1Name = 'back_' + selected[0] + '_' + selectedPair[0];
+            let card2Name = 'card_' + selected[1] + '_' + selectedPair[1]; let back2Name = 'back_' + selected[1] + '_' + selectedPair[1];
+            let card1 = scene.children.getByName(card1Name); let back1 = scene.children.getByName(back1Name);
+            let card2 = scene.children.getByName(card2Name); let back2 = scene.children.getByName(back2Name);
+            back1.setData('clicked', undefined); back2.setData('clicked', undefined);
 
             let duration = vars.durations.turnDuration/2;
 
-            scene.tweens.add({
-                targets: [card1,card2],
-                delay: duration*3,
-                scaleX: 0,
-                duration: duration
-            })
-            scene.tweens.add({
-                targets: [back1,back2],
-                delay: duration*4,
-                scaleX: 1,
-                duration: duration,
-                onComplete: vars.input.enable,
-            })
+            scene.tweens.add({ targets: [card1,card2], delay: duration*3, scaleX: 0, duration: duration })
+            scene.tweens.add({ targets: [back1,back2], delay: duration*4, scaleX: 1, duration: duration, onComplete: vars.input.enable })
         },
 
         unlockCardSpin: function(_card) {
@@ -704,13 +123,9 @@ var vars = {
                 console.log(cDataName + ' - ' + cardName);
                 if (cDataName!==cardName) {
                     if (vars.DEBUG===true) { console.log('Tweening alpha to 0.2'); }
-                    scene.tweens.add({
-                        targets: c,
-                        alpha: 0.2,
-                        duration: 500,
-                    })
+                    scene.tweens.add({ targets: c, alpha: 0.2, duration: 500 })
                 } else {
-                    console.log('Card Found! Leaving alpha at 1');
+                    if (vars,DEBUG===true) { console.log('Card Found! Leaving alpha at 1'); }
                     c.setDepth(21);
                 }
             })
@@ -719,23 +134,14 @@ var vars = {
             let finalScale=2;
             let rotations=4;
             let x = vars.canvas.cX; let y = vars.canvas.cY;
-            scene.tweens.add({
-                targets: _card,
-                delay: 250,
-                alpha: 1,
-                x: x,
-                y: y,
-                scale: finalScale,
-                rotation: Math.PI*rotations,
-                duration: 2000,
-                onComplete: vars.UI.hideUnlocked
-            })
+            scene.tweens.add({ targets: _card, delay: 250, alpha: 1, x: x, y: y, scale: finalScale, rotation: Math.PI*rotations, duration: 2000, onComplete: vars.UI.hideUnlocked })
         }
     },
 
     audio: {
         no: [],
         noUsed: [],
+        volumeOfCoins: 0.2,
         win: null,
         yes: [],
         yesUsed: [],
@@ -752,23 +158,14 @@ var vars = {
             let aV = vars.audio;
             let audioKey = null;
             if (_type==='yes') {
-                // grab a yes sound
-                audioKey = aV.yes.splice(0,1);
-                aV.yesUsed.push(audioKey);
+                audioKey = aV.yes.splice(0,1); aV.yesUsed.push(audioKey);
             } else if (_type==='no') {
-                // grab a no sound
-                audioKey = aV.no.splice(0,1);
-                aV.noUsed.push(audioKey);
+                audioKey = aV.no.splice(0,1); aV.noUsed.push(audioKey);
             } else if (_type==='win') {
-                // play the win sound
                 audioKey = 'win';
             }
 
-            if (audioKey!==null) {
-                scene.sound.stopAll();
-                scene.sound.play(audioKey);
-                aV.lastSoundCheck(_type);
-            }
+            if (audioKey!==null) { scene.sound.stopAll(); scene.sound.play(audioKey); aV.lastSoundCheck(_type); }
         },
 
         playSoundCoin: function() {
@@ -805,17 +202,8 @@ var vars = {
             let duration = vars.durations.turnDuration/2;
             scene.groups.cardsGroup.children.each( (c)=> {
                 let onComplete = null;
-                if (first===true) {
-                    first = false;
-                    onComplete = vars.cards.showCardBacks;
-                }
-                scene.tweens.add({
-                    targets: c,
-                    delay: 1750,
-                    scaleX: 0,
-                    duration: duration,
-                    onComplete: onComplete
-                })
+                if (first===true) { first = false; onComplete = vars.cards.showCardBacks; }
+                scene.tweens.add({ targets: c, delay: 1750, scaleX: 0, duration: duration, onComplete: onComplete })
             })
         },
 
@@ -867,15 +255,7 @@ var vars = {
                     let prize = consts[gV.difficulty]['coinWorth' + useCoin];
                     s.setData('prize', prize);
                     let delay = (b-1) * 16.667 * 30;
-                    scene.tweens.add({
-                        targets: s,
-                        delay: delay,
-                        key: { min: 1, max: 12 },
-                        ease: 'Quad.easeIn',
-                        y: vars.canvas.height+100,
-                        duration: 1000,
-                        onComplete: oC
-                    })
+                    scene.tweens.add({ targets: s, delay: delay, key: { min: 1, max: 12 }, ease: 'Quad.easeIn', y: vars.canvas.height+100, duration: 1000, onComplete: oC })
                 }
             } else { // NO
                 // turn the 2 cards back over
@@ -895,7 +275,7 @@ var vars = {
             let cV = vars.cards;
             let avail =  Phaser.Utils.Array.NumberArray(0,8);
             let cDeck = vars.imageSets.currentFName;
-            for (let c of cV.unlocked) { // ?
+            for (let c of cV.unlocked) {
                 if (c[0].includes(cDeck)) {
                     avail.push(parseInt(c[1]));
                 }
@@ -916,11 +296,7 @@ var vars = {
             scene.groups.cardBacksGroup.children.each( (c)=> {
                 c.setVisible(true);
                 let duration = vars.durations.turnDuration/2;
-                scene.tweens.add({
-                    targets: c,
-                    scaleX: 1,
-                    duration: duration
-                })
+                scene.tweens.add({ targets: c, scaleX: 1, duration: duration })
             })
         },
 
@@ -929,6 +305,10 @@ var vars = {
             if (vars.DEBUG===true) { console.log('Showing This card'); }
             let cardName = _card.name; // this is the back of the card
             cardName = cardName.match(/\w+_([0-9]{1,2})_([ab])/);
+
+            // check that this isnt the same card as the first (ie accidental double click)
+            if (_card.getData('clicked')===undefined) { _card.setData('clicked', true); } else { return false; }
+
             cardName = 'card_' + cardName[1] + '_' + cardName[2];
             if (vars.DEBUG===true) { console.log('Looking for ' + cardName); }
             let card = scene.children.getByName(cardName);
@@ -938,19 +318,8 @@ var vars = {
             scene.sound.play('cardTurn');
 
             // we now have the back of the card as "_card" and the front as "card"
-            scene.tweens.add({
-                targets: _card,
-                scaleX: 0,
-                duration: duration
-            })
-            scene.tweens.add({
-                targets: card,
-                delay: duration,
-                scaleX: 1,
-                duration: duration,
-                onComplete: vars.cards.addCardToSelected,
-                onCompleteParams: [ card ]
-            })
+            scene.tweens.add({ targets: _card, scaleX: 0, duration: duration })
+            scene.tweens.add({ targets: card, delay: duration, scaleX: 1, duration: duration, onComplete: vars.cards.addCardToSelected, onCompleteParams: [ card ] })
         },
 
         unlock: function(_cardID, _cardName) {
@@ -976,9 +345,7 @@ var vars = {
             let cV = vars.cards;
             let uArray = cV.unlocked;
             if (uArray.length>0) {
-                for (u of uArray) {
-                    cV.unlockedStr+=u[0] + ',';
-                }
+                for (u of uArray) { cV.unlockedStr+=u[0] + ','; }
                 cV.unlockedStr=cV.unlockedStr.slice(0,-1);
             }
         }
@@ -1026,7 +393,6 @@ var vars = {
             if (gV.difficulty!==cName) {
                 gV.difficulty = cName;
                 vars.localStorage.saveDifficulty();
-                // we need to reset the game here
                 vars.game.reset();
             } else { // player has selected the current difficulty, hide the options screen, nothing else needs done
                 vars.UI.optionsHide();
@@ -1035,17 +401,14 @@ var vars = {
 
         drawCards: function() {
             let gV = vars.game;
-            gV.moves=0;
             let cV = vars.cards;
-            let xyOffset = 20;
-            let xInc = cV.cardWidth+xyOffset;
-            let yInc = cV.cardHeight+xyOffset;
-            let yPush = 70;
+
+            gV.moves=0;
+            let xyOffset = 20; let xInc = cV.cardWidth+xyOffset; let yInc = cV.cardHeight+xyOffset; let yPush = 70;
             let cardSet = vars.imageSets.current;
             //let cardArray = cV.cardArray;
             let cardPosArray = cV.cardPosArray;
-            let cCX = cV.cardWidth/2 + 10;
-            let cCY = cV.cardHeight/2 + 10;
+            let cCX = cV.cardWidth/2 + 10; let cCY = cV.cardHeight/2 + 10;
             let difficulty = gV.difficulty;
             let cardBacks = consts[difficulty].cardBacks;
 
@@ -1062,7 +425,7 @@ var vars = {
                 // convert index to letter
                 let cardLetter=-1
                 if (index>=9) {
-                    cardLetter = String.fromCharCode((index-9)+65);
+                    if (index===9) { cardLetter = '9'; } else { cardLetter = String.fromCharCode((index-10)+65); }
                 } else {
                     cardLetter = index.toString();
                 }
@@ -1131,21 +494,10 @@ var vars = {
 
             // show the well done message
             let dV = vars.durations;
-            scene.tweens.add({
-                targets: wellDone,
-                delay: dV.moveToWinPosition/2,
-                alpha: 1,
-                y: 100,
-                duration: dV.wellDone
-            })
+            scene.tweens.add({ targets: wellDone, delay: dV.moveToWinPosition/2, alpha: 1, y: 100, duration: dV.wellDone })
 
             // show the play again button
-            scene.tweens.add({
-                targets: playAgain,
-                delay: dV.wellDone + dV.moveToWinPosition/2, // <== the time for the cards to move to the win position on screen
-                alpha: 1,
-                duration: dV.playAgain
-            })
+            scene.tweens.add({ targets: playAgain, delay: dV.wellDone + dV.moveToWinPosition/2, alpha: 1, duration: dV.playAgain })
         },
 
         reset: function() {
@@ -1162,10 +514,8 @@ var vars = {
 
             // empty out the groups
             let groups = scene.groups;
-            groups.cardsGroup.children.each( (c)=> { c.destroy(); })
-            groups.cardsGroup.clear();
-            groups.cardBacksGroup.children.each( (c)=> { c.destroy(); })
-            groups.cardBacksGroup.clear();
+            groups.cardsGroup.children.each( (c)=> { c.destroy(); }); groups.cardsGroup.clear();
+            groups.cardBacksGroup.children.each( (c)=> { c.destroy(); }); groups.cardBacksGroup.clear();
 
             // remove well done and play again
             let wD = scene.children.getByName('wellDone'); // note: if well done is visible, play again will be too. This just allows us to restart mid game
@@ -1257,11 +607,11 @@ var vars = {
             scene.add.image(vars.canvas.cX, vars.canvas.cY, 'whitePixel').setTint(vars.UI.getBGColour()).setScale(vars.canvas.width, vars.canvas.height).setName('optionsBG').setAlpha(0.99).setVisible(false);
 
             // Background Colours
-            let x = 1440; let xInc=180; let realX=x;
+            let x = 1340; let xInc=180; let realX=x;
             let y=200; let yInc=180;
             let m=0;
 
-            let bGTitle = scene.add.bitmapText(1360, 20, 'default', 'Backgrounds', 64, 1).setTint(0x0092DC).setName('bGTitle').setVisible(false).setDepth(11);
+            let bGTitle = scene.add.bitmapText(1270, 20, 'default', 'Backgrounds', 64, 1).setTint(0x0092DC).setName('bGTitle').setVisible(false).setDepth(11);
             scene.groups.bgOptions.add(bGTitle);
             for (s of vars.colours.backgrounds) {
                 let l=0;
@@ -1275,7 +625,7 @@ var vars = {
             }
 
             // Card Set options
-            scene.add.bitmapText(150, 20, 'default', 'Please select a card set...', 72, 1).setTint(0x0092DC).setName('optionsTitle').setVisible(false);
+            scene.add.bitmapText(190, 20, 'default', 'Select a card set...', 72, 1).setTint(0x0092DC).setName('optionsTitle').setVisible(false);
             // Full Screen Icon
             scene.add.image(1840,1000, 'fullScreenButton').setName('fullScreenButton').setData('fullScreen','false').setInteractive();
             // Options Icon
@@ -1295,29 +645,13 @@ var vars = {
 
             // show the players current "points"
             let data = {
-                batmanLego: {
-                    fontSize: 40,
-                    scale: [1,1.4],
-                    xy: [15, 5]
-                },
-                dragonsRR: {
-                    fontSize: 80,
-                    scale: [1.7,1],
-                    xy: [15, 5]
-                },
-                starWarsLego: {
-                    fontSize: 100,
-                    scale: [0.9,1],
-                    xy: [15, -20]
-                },
-                toyStory: {
-                    fontSize: 72,
-                    scale: [0.9,0.85],
-                    xy: [15, -10]
-                }
+                batmanLego: { fontSize: 40, scale: [1,1.4], xy: [15, 5] },
+                dragonsRR: { fontSize: 80, scale: [1.7,1], xy: [15, 5] },
+                starWarsLego: { fontSize: 100, scale: [0.9,1], xy: [15, -20] },
+                toyStory: { fontSize: 72, scale: [0.9,0.85], xy: [15, -10] }
             }
             
-            /* let points = vars.game.score;
+            let points = vars.game.score;
             let imageSetName = iSV.current;
             let fontData = data[imageSetName];
             let tint = consts.getTint(points);
@@ -1325,7 +659,7 @@ var vars = {
             let pointsText = scene.add.bitmapText(fontData.xy[0], fontData.xy[1], fontName, 'Points: ' + points + unlockText, fontData.fontSize).setTint(tint).setName('pointsText').setScale(fontData.scale[0],fontData.scale[1]);
             if (unlockText.length>0) { 
                 pointsText.setInteractive();
-            } */
+            }
             
         },
 
@@ -1342,6 +676,7 @@ var vars = {
                 }
             });
 
+            // fade in form
             scene.tweens.add({
                 targets: nameForm,
                 alpha: 1,
@@ -1374,20 +709,21 @@ var vars = {
         difficultyOptions: function() {
             let gV = vars.game;
             let difList = gV.difficultyOptions;
-            let y = 770;
-            let x = 1630;
+            let x = 1340; let y = 785;
 
-            let difTitle = scene.add.bitmapText(x-155, y-100,'default','DIFFICULTY',42).setDepth(12).setVisible(false);
+            let difTitle = scene.add.bitmapText(x+20, y-100,'default','Difficulty',58).setTint(0x0092DC).setName('diftitle').setDepth(12).setVisible(false);
             scene.groups.bgOptions.add(difTitle);
+            let c = 0;
             for (let d of difList) {
+                c++;
                 let frame=1;
                 if (d===gV.difficulty) { frame=0; }
-                let a = scene.add.image(x, y, 'difficultyButtons', frame).setDepth(11).setName('dif_' + d).setVisible(false).setInteractive();
+                let a = scene.add.image(x, y+40, 'difficultyButtons', frame).setDepth(11).setName('dif_' + d).setVisible(false).setInteractive();
                 let difficulty = d.capitalise();
                 if (d==='veryEasy') { difficulty='Very Easy'; }
-                let b = scene.add.bitmapText(x-150,y-25,'default',difficulty,42).setDepth(12).setName('dif_' + d).setVisible(false).setInteractive();
+                let b = scene.add.bitmapText(x-150,y+15,'default',difficulty,42).setDepth(12).setName('dif_' + d).setVisible(false).setInteractive();
                 scene.groups.bgOptions.addMultiple([a,b]);
-                y+=85;
+                if (c%2===0) { y+=95; x-=360; } else { x+=360; }
             }
         },
 
@@ -1405,13 +741,7 @@ var vars = {
 
         hideUnlocked: function(_tween, _object) {
             let card = _object[0];
-            scene.tweens.add({
-                targets: card,
-                delay: 2000,
-                alpha: 0,
-                duration: 2000,
-                onComplete: vars.UI.destroyUnlockedCard
-            })
+            scene.tweens.add({ targets: card, delay: 2000, alpha: 0, duration: 2000, onComplete: vars.UI.destroyUnlockedCard })
         },
 
         hideUpgrades: function() {
@@ -1434,19 +764,12 @@ var vars = {
         },
 
         pointsChange: function(_score) {
-            return false;
             if (Number.isInteger(_score)===true) {
                 let tint = consts.getTint(_score);
                 let unlockText = vars.UI.setUnlockText();
                 let pointsText = scene.children.getByName('pointsText').setText('Points: ' + _score + unlockText).setTint(tint);
-                if (scene.children.getByName('ulHeader')!==null) {
-                    vars.UI.showUpgradesHeader();
-                }
-                if (unlockText.length>0) {
-                    pointsText.setInteractive();
-                } else {
-                    pointsText.disableInteractive();
-                }
+                if (scene.children.getByName('ulHeader')!==null) { vars.UI.showUpgradesHeader(); }
+                if (unlockText.length>0) { pointsText.setInteractive(); } else { pointsText.disableInteractive(); }
             }
         },
 
@@ -1457,12 +780,9 @@ var vars = {
 
             if (points>=cardCost) {
                 let unlocks = ~~(points/cardCost);
-                let multi = 's';
-                if (unlocks===1) { multi=''; }
+                let multi = 's'; if (unlocks===1) { multi=''; }
                 msg = ' (you can unlock ' + unlocks + ' card' + multi + ')';
-                if (scene.children.getByName('ulHeader'!==null)) {
-                    vars.UI.showUpgradesHeader(true);
-                }
+                if (scene.children.getByName('ulHeader'!==null)) { vars.UI.showUpgradesHeader(true); }
             }
 
             return msg;
@@ -1498,7 +818,7 @@ var vars = {
                     gameTypes.push(gameTypes[0]);
                 }
             }
-            let x = 650; let y = 200; let o=0; let logos = [];
+            let x = 550; let y = 200; let o=0; let logos = [];
             for (gT of gameTypes) {
                 if (vars.DEBUG===true) { console.log('gT is ' + gT); }
                 for (let xPos=0; xPos<gT; xPos++) {
@@ -1560,13 +880,8 @@ var vars = {
                             let unlock = unlockables[position];
                             let frame = position+9;
                             let cardLetter = '';
-                            if (frame===9) {
-                                cardLetter = '9';
-                            } else {
-                                cardLetter = String.fromCharCode((position-1)+65);
-                            }
-                            let x = xMin + (col*xInc);
-                            let y = yMin + (row*yInc);
+                            if (frame===9) { cardLetter = '9'; } else { cardLetter = String.fromCharCode((position-1)+65); }
+                            let x = xMin + (col*xInc); let y = yMin + (row*yInc);
                             if (vars.DEBUG===true) { console.log('Position: ' + position + '. Frame: ' + frame + '. Card letter: ' + cardLetter + '. xy: ' + x + ',' + y + '. Unlock: ' + unlock); }
                             // TODO BEGIN HERE
                             let u = scene.add.image(x,y,_upgradeFor, 'card' + cardLetter).setName('unlockable').setData({ name: unlock, cID: frame }).setDepth(20).setInteractive();
