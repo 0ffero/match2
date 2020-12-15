@@ -198,6 +198,10 @@ vars.localStorage = {
         let lS = window.localStorage;
         let lV = vars.localStorage;
         let gV = vars.game;
+
+        // reset all save vars so the unlocks work properly
+        if (lS.match2_resetData===undefined) { lV.resetAll(); }
+
         if (lS.match2_selectedGame===undefined) {
             lS.match2_selectedGame='batmanLego';
             lS.match2_best=999;
@@ -300,6 +304,21 @@ vars.localStorage = {
         let newDate = new Date();
         let cDate = newDate.getDate().toString() + (newDate.getMonth() + 1).toString() + newDate.getFullYear().toString();
         return cDate;
+    },
+
+    resetAll: function() {
+        if (vars.DEBUG===true) { console.warn('Resetting all variables!'); }
+        let lS = window.localStorage;
+        lS.match2_best = "999";
+        lS.match2_bgColour = "2,0";
+        lS.match2_bonusGiven = "10112020";
+        lS.match2_difficulty = "veryEasy";
+        if (lS.match2_playerScore!==undefined) { lS.removeItem('match2_playerScore'); }
+        lS.match2_playerScoreEVE = "0";
+        lS.match2_playerScoreNH = "0";
+        lS.match2_selectedGame = "batmanLego";
+        lS.match2_unlocks = "";
+        lS.match2_resetData='true';
     },
 
     saveDifficulty: function() {

@@ -865,7 +865,7 @@ var vars = {
                 let cName = _upgradeFor + '_' + String.fromCharCode(cID)
                 // check if this card is already unlocked
                 if (!unlockedStr.includes(cName)) {
-                    unlockables.push(cName); unlockablesIDs.push(cID-65);
+                    unlockables.push(cName); unlockablesIDs.push((cID-65)+10);
                 }
             }
 
@@ -878,13 +878,12 @@ var vars = {
                         let position = col + (row*colMax);
                         if (position<unlockables.length) {
                             let unlock = unlockables[position];
-                            let frame = position+9;
-                            let cardLetter = '';
-                            if (frame===9) { cardLetter = '9'; } else { cardLetter = String.fromCharCode((position-1)+65); }
+                            let unlockID = unlockablesIDs[position];
+                            let cardLetter = unlock.split('_')[1];
                             let x = xMin + (col*xInc); let y = yMin + (row*yInc);
-                            if (vars.DEBUG===true) { console.log('Position: ' + position + '. Frame: ' + frame + '. Card letter: ' + cardLetter + '. xy: ' + x + ',' + y + '. Unlock: ' + unlock); }
+                            if (vars.DEBUG===true) { console.log('Position: ' + position + '. Unlock ID: ' + unlockID + '. Card letter: ' + cardLetter + '. xy: ' + x + ',' + y + '. Unlock: ' + unlock); }
                             // TODO BEGIN HERE
-                            let u = scene.add.image(x,y,_upgradeFor, 'card' + cardLetter).setName('unlockable').setData({ name: unlock, cID: frame }).setDepth(20).setInteractive();
+                            let u = scene.add.image(x,y,_upgradeFor, 'card' + cardLetter).setName('unlockable').setData({ name: unlock, cID: unlockID }).setDepth(20).setInteractive();
                             scene.groups.upgrades.add(u);
                         }
                     }
