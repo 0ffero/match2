@@ -125,7 +125,7 @@ var vars = {
                     if (vars.DEBUG===true) { console.log('Tweening alpha to 0.2'); }
                     scene.tweens.add({ targets: c, alpha: 0.2, duration: 500 })
                 } else {
-                    if (vars,DEBUG===true) { console.log('Card Found! Leaving alpha at 1'); }
+                    if (vars.DEBUG===true) { console.log('Card Found! Leaving alpha at 1'); }
                     c.setDepth(21);
                 }
             })
