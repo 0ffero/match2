@@ -1,5 +1,7 @@
 var vars = {
-    DEBUG: true,
+    DEBUG: false,
+
+    version: 2.0,
 
     animate: {
         init: function() {
@@ -120,7 +122,7 @@ var vars = {
             let cardName = _card.getData('name');
             scene.groups.upgrades.children.each( (c)=> {
                 let cDataName = c.getData('name');
-                console.log(cDataName + ' - ' + cardName);
+                if (vars.DEBUG===true) { console.log(cDataName + ' - ' + cardName); }
                 if (cDataName!==cardName) {
                     if (vars.DEBUG===true) { console.log('Tweening alpha to 0.2'); }
                     scene.tweens.add({ targets: c, alpha: 0.2, duration: 500 })

@@ -88,7 +88,7 @@ const consts = {
     },
 
     convertPrizeToCoins: function(_gold, _silver, _prize) {
-        console.log('Prize: ' + _prize + ' (s:' + _silver + ', g:' + _gold + ')');
+        if (vars.DEBUG===true) { console.log('Prize: ' + _prize + ' (s:' + _silver + ', g:' + _gold + ')'); }
         let oPrize = _prize;
 
         let gV = vars.game;

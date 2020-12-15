@@ -289,7 +289,7 @@ vars.localStorage = {
         let cV = vars.cards;
         let unlocks = _unlocks.split(';');
         if (unlocks.length>0) {
-            console.log('Unlocks Found.');
+            if (vars.DEBUG===true) { console.log('Unlocks Found.'); }
             for (g of unlocks) {
                 let unlocks = g.split(',');
                 if (unlocks[0]!=='') {
