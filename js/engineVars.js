@@ -53,9 +53,47 @@ vars.emitters =  {
 }
 
 vars.files = {
+    audio: {
+        others: [
+            ['coinAdd', 'audio/coin.ogg'],
+            ['unlock', 'audio/unlock.ogg'],
+            ['cardTurn', 'audio/cardTurn.m4a']
+        ]
+    },
+
+    backgrounds: {
+        list: [],
+        backgroundsData: [['batmanLego',54,'.jpg']],
+
+        init: function() {
+            let bgDatas = this.backgroundsData;
+            let differentBGs = bgDatas.length;
+
+            for (let b=0; b<differentBGs; b++) {
+                let bgData = bgDatas[b];
+                let pre = bgData[0]; let max=bgData[1]; let ext = bgData[2]
+                vars.files.backgrounds.list.push(Phaser.Utils.Array.NumberArray(1,max,pre + 'BG_', ext));
+            }
+        }
+    },
+
     destroy: {
         images: ['cardBack', 'cardBackAlt'],
         sounds: [],
+    },
+
+    addition: {
+        cardType: 'spritesheet',
+        editionText: 'Addition Edition',
+        paragraph: '\n',
+        welcomeData: [50, 920, 60, 1, 1.3, 0.95],
+        cards: null, // addition and subtraction dont have "backs" as cards are always face forward
+        font: ['numbersFont', 'fonts/numbersFont.png', 'fonts/numbersFont.xml'],
+        sounds: {
+            good: ['batmanYes1.ogg','batmanYes2.ogg','batmanYes3.ogg','batmanYes4.ogg','batmanYes5.ogg'],
+            bad:  ['batmanNo1.ogg','batmanNo2.ogg','batmanNo3.ogg','batmanNo4.ogg','batmanNo5.ogg','batmanNo6.ogg','batmanNo7.ogg'],
+            win:  'batmanWin.ogg'
+        },
     },
 
     batman: {
@@ -163,10 +201,13 @@ vars.files = {
     loadAssets: function() {
         let files;
         switch (vars.imageSets.current) {
-            case 'batmanLego': files = vars.files.batman; multiLoader(files); break;
-            case 'dragonsRR': files = vars.files.dragons; files.init(); multiLoader(files); break;
-            case 'starWarsLego': files = vars.files.starWarsLego; multiLoader(files); break;
-            case 'toyStory': files = vars.files.toyStory; files.init(); multiLoader(files); break;
+            case 'batmanLego':   files = vars.files.batman;                     multiLoader(files); break;
+            case 'dragonsRR':    files = vars.files.dragons;      files.init(); multiLoader(files); break;
+            case 'starWarsLego': files = vars.files.starWarsLego;               multiLoader(files); break;
+            case 'toyStory':     files = vars.files.toyStory;     files.init(); multiLoader(files); break;
+
+            case 'addition':     multiLoaderNumbers('addition'); break;
+            case 'subtraction':  multiLoaderNumbers('subtraction'); break;
         }
     }
 },
@@ -181,8 +222,8 @@ vars.groups = {
 }
 
 vars.imageSets = {
-    available: ['batmanLego','starWarsLego', 'dragonsRR', 'toyStory'],
-    fileName: ['batman','starWarsLego','dragons','toyStory'],
+    available: ['batmanLego','starWarsLego', 'dragonsRR', 'toyStory','addition'],
+    fileName: ['batman','starWarsLego','dragons','toyStory','addition'],
     current: 'dragonsRR',
     currentFName: -1,
 
@@ -198,6 +239,7 @@ vars.localStorage = {
         let lS = window.localStorage;
         let lV = vars.localStorage;
         let gV = vars.game;
+        let cV = vars.cards;
 
         // reset all save vars so the unlocks work properly
         if (lS.match2_resetData===undefined) { lV.resetAll(); }
@@ -244,11 +286,15 @@ vars.localStorage = {
         if (lS.match2_unlocks===undefined) {
             lS.match2_unlocks='';
         } else {
-            vars.cards.unlockedStr = '';
-            vars.cards.unlocked = [];
+            cV.unlockedStr = '';
+            cV.unlocked = [];
             let unlocks = lV.convertLSunlocks(lS.match2_unlocks);
-            vars.cards.unlocks = unlocks;
-            vars.cards.unlockedToStr();
+            cV.unlocks = unlocks;
+            cV.unlockedToStr();
+        }
+
+        if (lS.match2_unlocksAddition===undefined) {
+            lS.match2_unlocksAddition='';
         }
 
         // player daily bonus
@@ -264,6 +310,25 @@ vars.localStorage = {
             }
         }
 
+        // player name
+        if (lS.match2_playerName===undefined) {
+            lS.match2_playerName='Caleb';
+        } else {
+            vars.player.name = lS.match2_playerName
+        }
+
+    },
+
+    backgroundsForNumbersUpdate: function() { // the player has unlocked the current background
+        let gV = vars.game;
+        // add it to the background names
+        gV.backgroundNames.push(gV.currentBackground);
+        // empty the current background var
+        gV.currentBackground = '';
+        // save the backgrounds
+        let lS = window.localStorage;
+        let bgList = gV.backgroundNames.toString();
+        lS.match2_unlocksAddition = bgList;
     },
 
     bonusGiven: function() {

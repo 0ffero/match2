@@ -83,6 +83,10 @@ function create() {
     vars.cards.buildDefaultArrays();
     vars.imageSets.init();
 
+    let numbersGame = false;
+    let lS = window.localStorage;
+    if (lS.match2_selectedGame==='addition' || lS.match2_selectedGame==='subtraction') { numbersGame = true; }
+
     scene.groups = {};
     scene.groups.cardsGroup = scene.add.group();
     scene.groups.cardBacksGroup = scene.add.group();
@@ -92,18 +96,19 @@ function create() {
     scene.groups.upgrades = scene.add.group();
 
     // DRAW GAME BOARD
-    vars.game.drawCards();
-
-    // ANIMATIONS
-    vars.animate.init();
+    if (numbersGame === false) { vars.game.drawCards(); } else { vars.cards.createAdditionPairs(); }
 
     // INPUT
     vars.input.init();
 
-    // Flip all the cards face down
-    vars.cards.allFaceDown();
+    // ANIMATIONS
+    vars.animate.init();
+
+    if (numbersGame===false) {
+        // Flip all the cards face down
+        vars.cards.allFaceDown();
+    }
 
     // UI
     vars.UI.init();
-
 }
