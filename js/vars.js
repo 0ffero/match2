@@ -901,6 +901,7 @@ var vars = {
             // START THE GAME
             vars.game.drawCards();
             vars.cards.allFaceDown();
+            scene.particles = undefined;
         },
 
         updateScore: function() {
@@ -1002,7 +1003,7 @@ var vars = {
                 alpha: { start: 1, end: 0 },
                 deathZone: { type: 'onLeave', source: window }
             });
-            scene.particles.snow.setActive(false).setVisible(false);
+            scene.particles.snow.setDepth(20).setActive(false).setVisible(false);
         },
 
         snowParticles: function() {
