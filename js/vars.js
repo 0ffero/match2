@@ -969,6 +969,8 @@ var vars = {
     particles: {
         init: function() {
             scene.particles = {}
+            
+            // SNOW
             scene.particles.snow = scene.add.particles('snowSpritesLarge');
             //scene.particles.rain = scene.add.particles('flares');
             let window = new Phaser.Geom.Rectangle(-50, -100, vars.canvas.width+100, vars.canvas.height+200);
@@ -1004,6 +1006,56 @@ var vars = {
                 deathZone: { type: 'onLeave', source: window }
             });
             scene.particles.snow.setDepth(20).setActive(false).setVisible(false);
+
+            // XMAS TREE
+            let tree = new Phaser.Geom.Triangle.BuildEquilateral(0, -250, 400);
+            let trunk = new Phaser.Geom.Rectangle(0, 0, 80, 80);
+
+            scene.particles.xmasTree = scene.add.particles('flares');
+
+            scene.particles.xmasTree.createEmitter({
+                frame: 'green',
+                x: 1620, y: 500,
+                speed: 0,
+                lifespan: 2000,
+                delay: 2000,
+                quantity: 48,
+                frequency: 2000,
+                delay: 500,
+                scale: { start: 0.2, end: 0.1 },
+                blendMode: 'ADD',
+                emitZone: { type: 'edge', source: tree, quantity: 48 }
+            });
+
+            scene.particles.xmasTree.createEmitter({
+                frame: 'red',
+                tint: 0xffff00,
+                x: 1580, y: 620,
+                speed: 0,
+                alpha: 0.4,
+                lifespan: 500,
+                delay: 500,
+                frequency: 0,
+                quantity: 1,
+                scale: 0.2,
+                blendMode: 'ADD',
+                emitZone: { type: 'edge', source: trunk, quantity: 48 }
+            });
+
+            scene.particles.xmasTree.createEmitter({
+                frame: 'red',
+                x: 1620, y: 500,
+                lifespan: 500,
+                quantity: 1,
+                frequency: 200,
+                scale: 0.6,
+                blendMode: 'ADD',
+                emitZone: { type: 'edge', source: tree, quantity: 12 }
+            });
+        },
+
+        xmasTree: function() {
+            
         },
 
         snowParticles: function() {
