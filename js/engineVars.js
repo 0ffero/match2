@@ -96,6 +96,20 @@ vars.files = {
         },
     },
 
+    subtraction: {
+        cardType: 'spritesheet',
+        editionText: 'Subtraction Edition',
+        paragraph: '\n',
+        welcomeData: [50, 920, 60, 1, 1.3, 0.95],
+        cards: null, // addition and subtraction dont have "backs" as cards are always face forward
+        font: ['numbersFont', 'fonts/numbersFont.png', 'fonts/numbersFont.xml'],
+        sounds: {
+            good: ['batmanYes1.ogg','batmanYes2.ogg','batmanYes3.ogg','batmanYes4.ogg','batmanYes5.ogg'],
+            bad:  ['batmanNo1.ogg','batmanNo2.ogg','batmanNo3.ogg','batmanNo4.ogg','batmanNo5.ogg','batmanNo6.ogg','batmanNo7.ogg'],
+            win:  'batmanWin.ogg'
+        },
+    },
+
     batman: {
         cardType: 'atlas',
         editionText: 'Lego Batman Edition',
@@ -222,8 +236,8 @@ vars.groups = {
 }
 
 vars.imageSets = {
-    available: ['batmanLego','starWarsLego', 'dragonsRR', 'toyStory','addition'],
-    fileName: ['batman','starWarsLego','dragons','toyStory','addition'],
+    available: ['batmanLego','starWarsLego', 'dragonsRR', 'toyStory','addition','subtraction'],
+    fileName: ['batman','starWarsLego','dragons','toyStory','addition','subtraction'],
     current: 'dragonsRR',
     currentFName: -1,
 

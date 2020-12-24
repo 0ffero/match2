@@ -1,4 +1,5 @@
 const consts = {
+    // difficulty constants
     veryEasy: {
         points: {
             //     [low prize --------------------- best prize]
@@ -54,6 +55,16 @@ const consts = {
         coinWorthG: 10,
         coinWorthS: 5,
         pairWorth: 10
+    },
+
+    depths: {
+        snow: 100,
+        options: 30,
+        unlock: 20,
+        coins: 10,
+        game: 5,
+        additionBG: 2,
+        gameBG: 1,
     },
 
     convertMovesToPrize: function() {

@@ -32,7 +32,7 @@ function multiLoaderFonts(files) {
     let font = files.font;
     scene.load.bitmapFont(font[0] , font[1], font[2]);
     scene.load.bitmapFont('default', 'fonts/default.png', 'fonts/default.xml');
-    scene.load.bitmapFont('default', 'fonts/xmasFont.png', 'fonts/xmasFont.xml');
+    scene.load.bitmapFont('xmasFont', 'fonts/xmasFont.png', 'fonts/xmasFont.xml');
 }
 
 function multiLoaderNumbers(mathType=null) {

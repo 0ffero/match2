@@ -35,7 +35,7 @@ var vars = {
                     let tDelay = g*16.6667*delay; goldDelay+=16.6667*delay;
                     let tDuration = Phaser.Math.RND.between(dMin,dMax);
                     let scale = Phaser.Math.RND.between(40, 60)/100;
-                    let a = scene.add.sprite(Phaser.Math.RND.between(xMin,xMax),-200,coin).setScale(scale).setDepth(5);
+                    let a = scene.add.sprite(Phaser.Math.RND.between(xMin,xMax),-200,coin).setScale(scale).setDepth(consts.depths.coins+1);
                     a.setData('prize', gWorth);
                     scene.groups.coins.add(a);
 
@@ -57,7 +57,7 @@ var vars = {
                     let tDelay = s*16.67777*delay;
                     let tDuration = Phaser.Math.RND.between(dMin,dMax);
                     let scale = Phaser.Math.RND.between(40, 60)/100;
-                    let a = scene.add.sprite(Phaser.Math.RND.between(xMin,xMax),-200,coin).setScale(scale).setDepth(5);
+                    let a = scene.add.sprite(Phaser.Math.RND.between(xMin,xMax),-200,coin).setScale(scale).setDepth(consts.depths.coins);
                     if (s===sCoins) { lC = true; tDuration = dMax; }
                     a.setData({ 'prize': sWorth, 'ignoreClear': ic, 'lastCoin': lC });
 
@@ -84,9 +84,9 @@ var vars = {
                 cardName2 = 'cardB_' + _cardNumber + '_answer';
             }
             let cardA = scene.children.getByName(cardName1);
-            cardA.setDepth(2);
+            cardA.setDepth(consts.depths.game+4);
             let cardB = scene.children.getByName(cardName2);
-            cardB.setDepth(1);
+            cardB.setDepth(consts.depths.game+3);
             if (_numbers===false) { cardB.setTint(0x888888); }
 
             let cV = vars.cards;
@@ -140,7 +140,7 @@ var vars = {
                 let oC = gV.addCoinToScore;
 
                 let x = Phaser.Math.RND.between(uiV.coinArea[0],uiV.coinArea[1]);
-                let s = scene.add.sprite(x,-200,'coin' + useCoin).setScale(0.7).setDepth(3);
+                let s = scene.add.sprite(x,-200,'coin' + useCoin).setScale(0.7).setDepth(consts.depths.coins+2);
                 s.anims.play('coin' + useCoin);
                 scene.groups.coins.add(s);
                 if (cV.pairsLeft[0]===0) { s.setData('ignoreClear', true); }
@@ -218,7 +218,7 @@ var vars = {
                     scene.tweens.add({ targets: c, alpha: 0.2, duration: 500 })
                 } else {
                     if (vars.DEBUG===true) { console.log('Card Found! Leaving alpha at 1'); }
-                    c.setDepth(21);
+                    c.setDepth(consts.depths.unlock+2);
                 }
             })
 
@@ -272,7 +272,14 @@ var vars = {
         cardPosArray: [],
         cardWidth: 200,
         cardHeight: 260,
-        options: [['cmd_batmanLego','batmanButton'],['cmd_starWarsLego','starWarsButton'], ['cmd_dragonsRR', 'dragonsButton'], ['cmd_toyStory', 'toyStoryButton']],
+        options: [
+            ['cmd_batmanLego','batmanButton'],
+            ['cmd_starWarsLego','starWarsButton'],
+            ['cmd_dragonsRR', 'dragonsButton'],
+            ['cmd_toyStory', 'toyStoryButton'],
+            ['cmd_addition', 'additionButton'],
+            ['cmd_subtraction', 'subtractionButton']
+        ],
         pairsLeft: [9,9],
         spinToOffsets: [1450,150],
         selected: [],
@@ -383,55 +390,80 @@ var vars = {
         createAdditionPairs: function(_override=null) {
             let nums = '';
             let anss = '';
-            let difficulty = vars.game.difficulty;;
+            let difficulty = vars.game.difficulty;
+            let gameType = vars.imageSets.current;
             if (_override!==null) { difficulty = _override; }
             let removeDupes = true;
 
             // THIS CODE WILL MOVE TO ITS OWN FUNCTION
             let numArrays = {}
-            let a = Phaser.Utils.Array.NumberArrayStep(10,91,1);
-            let b = Phaser.Utils.Array.NumberArrayStep(1,10,1);
-            numArrays.veryEasy = [a,b];
-
-            a = Phaser.Utils.Array.NumberArrayStep(10,100,1);
-            b = Phaser.Utils.Array.NumberArrayStep(1,10,1);
-            numArrays.easy = [a,b];
-
-            a = Phaser.Utils.Array.NumberArrayStep(5,95,5);
-            b = Phaser.Utils.Array.NumberArrayStep(5,95,5);
-            numArrays.normal = [a,b,100];
-
-            a = Phaser.Utils.Array.NumberArrayStep(10,50,1);
-            b = Phaser.Utils.Array.NumberArrayStep(10,50,5);
-            numArrays.hard = [a,b];
+            if (gameType==='addition') {
+                let a = Phaser.Utils.Array.NumberArrayStep(10,91,1);    let b = Phaser.Utils.Array.NumberArrayStep(1,10,1);     numArrays.veryEasy = [a,b];
+                    a = Phaser.Utils.Array.NumberArrayStep(10,100,1);       b = Phaser.Utils.Array.NumberArrayStep(1,10,1);     numArrays.easy = [a,b];
+                    a = Phaser.Utils.Array.NumberArrayStep(5,95,5);         b = Phaser.Utils.Array.NumberArrayStep(5,95,5);     numArrays.normal = [a,b,100];
+                    a = Phaser.Utils.Array.NumberArrayStep(10,50,1);        b = Phaser.Utils.Array.NumberArrayStep(10,50,5);    numArrays.hard = [a,b];
+            } else if (gameType==='subtraction') {
+                let a = Phaser.Utils.Array.NumberArrayStep(10,98,1);    let b = Phaser.Utils.Array.NumberArrayStep(1,10,1);     numArrays.veryEasy = [a,b];
+                    a = Phaser.Utils.Array.NumberArrayStep(11,109,1);       b = Phaser.Utils.Array.NumberArrayStep(1,10,1);     numArrays.easy = [a,b];
+                    a = Phaser.Utils.Array.NumberArrayStep(10,100,10);      b = Phaser.Utils.Array.NumberArrayStep(5,95,5);     numArrays.normal = [a,b,100];
+                    a = Phaser.Utils.Array.NumberArrayStep(55,100,1);       b = Phaser.Utils.Array.NumberArrayStep(10,50,5);    numArrays.hard = [a,b];
+            }
             // END
 
             let numSet = numArrays[difficulty];
 
-            for (let i=0; i<9; i++) {
-                // generate first number
-                let a = numSet[0];
-                let number1 = a.splice(Phaser.Math.RND.between(0, a.length-1),1)[0];
+            // ADDITION
+            if (gameType==='addition') {
+                for (let i=0; i<9; i++) {
+                    // generate first number
+                    let a = numSet[0];
+                    let number1 = a.splice(Phaser.Math.RND.between(0, a.length-1),1)[0];
 
-                let b = numSet[1];
-                if (numSet[2]!==undefined) { // limit the 2nd number
-                    num2Limit = numSet[2] - number1;
-                    let d = [];
-                    for (let c=0; c<b.length; c++) {
-                        if (b[c]<num2Limit) {
-                            d.push(b[c]);
+                    // generate second number
+                    // limit the 2nd number
+                    let b = numSet[1];
+                    if (numSet[2]!==undefined) {
+                        num2Limit = numSet[2] - number1; let d = [];
+                        for (let c=0; c<b.length; c++) {
+                            if (b[c]<num2Limit) { d.push(b[c]); }
                         }
+                        b=d;
                     }
-                    b=d;
+
+                    let number2 = 0;
+                    if (b.length>1) { number2 = b.splice(Phaser.Math.RND.between(0, b.length-1),1)[0]; } else { number2 = b[0]; }
+
+                    let ans = number1 + number2;
+
+                    if (removeDupes===true) {
+                        if (anss.includes(ans)) { console.warn('Random number: ' + i + '. Discarding this number (' + number1 + ',' + number2 + ',' + ans + ') as it has the same answer as another sum.'); i--; a.push(number1); b.push(number2) } else { if (vars.DEBUG===true) { console.log('Random number ' + i + ' accepted (' + 'Nums: ' + number1 + ',' + number2 + ',' + ans + ')') }; nums += number1 + ',' + number2 + ',' + ans + ';'; anss+=ans + ';'; }
+                    }
                 }
+            } else if (gameType==='subtraction') {
+                for (let i=0; i<9; i++) {
+                    // generate big number
+                    let a = numSet[0];
+                    let number1 = a.splice(Phaser.Math.RND.between(0, a.length-1),1)[0];
 
-                let number2 = 0;
-                if (b.length>1) { number2 = b.splice(Phaser.Math.RND.between(0, b.length-1),1)[0]; } else { number2 = b[0]; }
+                    // limit the 2nd number
+                    let b = numSet[1];
+                    if (numSet[2]!==undefined) {
+                        num2Limit = numSet[2] - number1; let d = [];
+                        for (let c=0; c<b.length; c++) {
+                            if (b[c]<num2Limit) { d.push(b[c]); }
+                        }
+                        b=d;
+                    }
 
-                let ans = number1 + number2;
+                    let number2 = 0;
+                    if (b.length>1) { number2 = b.splice(Phaser.Math.RND.between(0, b.length-1),1)[0]; } else { number2 = b[0]; }
 
-                if (removeDupes===true) {
-                    if (anss.includes(ans)) { console.warn('Random number: ' + i + '. Discarding this number (' + number1 + ',' + number2 + ',' + ans + ') as it has the same answer as another sum.'); i--; a.push(number1); b.push(number2) } else { if (vars.DEBUG===true) { console.log('Random number ' + i + ' accepted (' + 'Nums: ' + number1 + ',' + number2 + ',' + ans + ')') }; nums += number1 + ',' + number2 + ',' + ans + ';'; anss+=ans + ';'; }
+                    let ans = number1 - number2;
+
+                    if (removeDupes===true) {
+                        if (anss.includes(ans)) { console.warn('Random number: ' + i + '. Discarding this number (' + number1 + ',' + number2 + ',' + ans + ') as it has the same answer as another sum.'); i--; a.push(number1); b.push(number2) } else { if (vars.DEBUG===true) { console.log('Random number ' + i + ' accepted (' + 'Nums: ' + number1 + ',' + number2 + ',' + ans + ')') }; nums += number1 + ',' + number2 + ',' + ans + ';'; anss+=ans + ';'; }
+                    }
+
                 }
             }
             nums = nums.slice(0,-1);
@@ -623,7 +655,7 @@ var vars = {
             scene.load.start();
             scene.load.on('filecomplete-image-backgroundImage_' + randomID, function (key, type, data) {
                 if (scene.children.getByName('numbersBG')!==null) { scene.children.getByName('numbersBG').destroy(); }
-                scene.add.image((xWidth/2)+10, vars.canvas.cY-60, name).setScale(xWidth/imageWidth).setDepth(-1).setName('numbersBG');
+                scene.add.image((xWidth/2)+10, vars.canvas.cY-60, name).setScale(xWidth/imageWidth).setDepth(consts.depths.additionBG).setName('numbersBG');
             });
         },
 
@@ -716,6 +748,14 @@ var vars = {
         drawCardsAddition: function(cardDeck) {
             let gV = vars.game;
             let cV = vars.cards;
+            let dC = consts.depths;
+
+            if (scene.children.getByName('gameBG')===null) { 
+                let tint = vars.UI.getBGColour();
+                scene.add.image(vars.canvas.cX, vars.canvas.cY, 'background').setName('gameBG').setTint(tint); 
+            }
+
+            if (cardDeck===undefined) { console.error('The card deck is empty!'); return false; }
 
             // first create a background if one doesnt exist
             vars.game.bgInitNumbers();
@@ -737,23 +777,39 @@ var vars = {
             }
 
             let counter=0;
-            scene.containers = { numberContainers: [] }
-            let sC = scene.containers;
             if (scene.groups.questions===undefined) { // this is the first time weve entered this function, so we need to create the groups and containers
                 scene.groups.questions = scene.add.group();
                 scene.groups.answers = scene.add.group();
-
-                for (let c=0; c<18; c++) { // create the containers
-                    sC.numberContainers.push(scene.add.container().setName('container_' + c));
-                }
-                sC.warningContainer = scene.add.container().setName('warningContainer');
+            } else { // empty out the two card groups
+                scene.groups.questions.children.each( (c)=> {
+                    c.destroy();
+                })
+                scene.groups.answers.children.each( (c)=> {
+                    c.destroy();
+                })
             }
 
-            // create the warning if it doesnt already exist
-            if (sC.warningContainer.children===undefined) {
+            if (scene.containers===undefined) {
+                scene.containers = { numberContainers: [] }
+                scene.containers.warningContainer = scene.add.container().setName('warningContainer');
                 let warningBG = scene.add.image(0,0,'warningBG',0).setName('warningBG').setScale(1.3,1);
                 let warn = scene.add.bitmapText(0,0,'numbersFont','Turn over a question card first :)',58).setOrigin(0.5, 0.5).setName('numbersWarning').setTint(0xff0000);
-                sC.warningContainer.add([warningBG,warn]).setDepth(20).setPosition(650,495).setSize(830,106).setAlpha(0);
+                scene.containers.warningContainer.add([warningBG,warn]).setDepth(dC.game+2).setPosition(650,495).setSize(830,106).setAlpha(0);
+            } else {
+                scene.containers.numberContainers.forEach( (c)=> {
+                    c.destroy();
+                })
+                scene.containers.numberContainers = [];
+                // empty out the contents of the blackBGs
+                scene.groups.additionBlackBGs.children.each( (c)=> {
+                    c.destroy();
+                })
+            }
+
+            // build the containers
+            let sC = scene.containers;
+            for (let c=0; c<18; c++) { // create the containers
+                sC.numberContainers.push(scene.add.container().setName('container_' + c));
             }
 
             let containerNum=0;
@@ -761,7 +817,7 @@ var vars = {
             // as cards are added to containers all x,y vals are 0,0. We then move the container to the real x,y
             for (let card in cardDeck) {
                 if (vars.DEBUG===true) { console.log('Creating card'); }
-                
+
                 let cardData = cardDeck[card];
                 let number1 = cardData.number1;
                 let number2 = cardData.number2;
@@ -784,35 +840,42 @@ var vars = {
                 // card 1
                 let x = xPos1 * xInc + cCX; let y = yPos1 * yInc + cCY; y+=yPush;
                 // the back of the card
-                scene.add.image(x,y,'whitePixel').setScale(200,260).setTint(0x000000).setName('cardBlackBG_' + counter + '_1');
-                let cardBack = scene.add.sprite(x,y,'cardNumbers',4).setName('cardB_' + counter + '_question').setScale(0,1).setInteractive().setData({ cardID: counter, cNum: counter, pair: 'a', x: x, y: y, xPos: xPos1, yPos: yPos1 });
+                let blackBG = scene.add.image(x,y,'whitePixel').setScale(200,260).setTint(0x000000).setName('cardBlackBG_' + counter + '_1').setDepth(consts.depths.game-1);
+                let cardBack = scene.add.sprite(x,y,'cardNumbers',4).setName('cardB_' + counter + '_question').setDepth(consts.depths.game-1).setScale(0,1).setInteractive().setData({ cardID: counter, cNum: counter, pair: 'a', x: x, y: y, xPos: xPos1, yPos: yPos1 });
 
                 // the actual card
                 let picA = scene.add.sprite(0,0,'cardNumbers', 5).setName('cardBN_' + counter + '_a');
-                let cardBGA = scene.add.image(0,0,'cardBacks', Phaser.Math.RND.between(0,scene.textures.list.cardBacks.frameTotal-2)).setAlpha(0.35).setName('cardBack_' + counter).setDepth(20);
-                let questionT = scene.add.bitmapText(0,0,'numbersFont',number1 + '\n+\n' + number2,58,1).setAlpha(1).setOrigin(0.5,0.5).setName('cardN_' + counter + '_question');
+                let cardBGA = scene.add.image(0,0,'cardBacks', Phaser.Math.RND.between(0,scene.textures.list.cardBacks.frameTotal-2)).setAlpha(0.35).setName('cardBack_' + counter).setDepth(dC.game);
+                let gameType = vars.imageSets.current;
+                let questionT = null;
+                if (gameType==='addition') {
+                    questionT = scene.add.bitmapText(0,0,'numbersFont',number1 + '\n+\n' + number2,58,1).setAlpha(1).setOrigin(0.5,0.5).setName('cardN_' + counter + '_question');
+                } else if (gameType==='subtraction') {
+                    questionT = scene.add.bitmapText(0,0,'numbersFont',number1 + '\n-\n' + number2,58,1).setAlpha(1).setOrigin(0.5,0.5).setName('cardN_' + counter + '_question');
+                }
                 // add all the bits to the container
                 let container = containers[containerNum];
-                container.add([picA, cardBGA, questionT]).setSize(200,260).setPosition(x,y).setName('cardB_C_' + counter + '_question').setData('cNum',counter).setDepth(20).setInteractive();
+                container.add([picA, cardBGA, questionT]).setSize(200,260).setPosition(x,y).setName('cardB_C_' + counter + '_question').setData('cNum',counter).setDepth(dC.game).setInteractive();
                 containerNum++;
 
 
                 // card 2
                 x = xPos2 * xInc + cCX; y = yPos2 * yInc + cCY; y+=yPush;
                 // the back of the card
-                scene.add.image(x,y,'whitePixel').setScale(200,260).setTint(0x000000).setName('cardBlackBG_' + counter + '_2');
+                let blackBG2 = scene.add.image(x,y,'whitePixel').setScale(200,260).setTint(0x000000).setName('cardBlackBG_' + counter + '_2').setDepth(consts.depths.game-1);
                 let picB = scene.add.sprite(0,0,'cardNumbers', cardFrame).setName('cardB_' + counter + '_b');
                 let textTint = 0xFFFFFF;
                 if (difficulty==='veryEasy') { textTint = 0xFFFF00; }
-                let cardBGB = scene.add.image(0,0,'cardBacks', Phaser.Math.RND.between(0,scene.textures.list.cardBacks.frameTotal-2)).setAlpha(0.35).setName('cardBack_' + counter).setDepth(20);
+                let cardBGB = scene.add.image(0,0,'cardBacks', Phaser.Math.RND.between(0,scene.textures.list.cardBacks.frameTotal-2)).setAlpha(0.35).setName('cardBack_' + counter).setDepth(dC.game);
                 let answerT = scene.add.bitmapText(0,0,'numbersFont',answer,58,1).setAlpha(1).setTint(textTint).setOrigin(0.5,0.5).setName('cardN_' + counter + '_b');
                 answerT.setData({ cardID: counter, cNum: counter, pair: 'b', x: x, y: y, xPos: xPos2, yPos: yPos2, visible: true });
                 // add all the bits to the container
                 container = containers[containerNum];
-                container.add([picB, cardBGB, answerT]).setSize(200,260).setPosition(x,y).setName('cardB_' + counter + '_answer').setDepth(20).setInteractive().setData({ cardID: counter, cNum: counter, pair: 'b', x: x, y: y, xPos: xPos2, yPos: yPos2, visible: true });
+                container.add([picB, cardBGB, answerT]).setSize(200,260).setPosition(x,y).setName('cardB_' + counter + '_answer').setDepth(dC.game).setInteractive().setData({ cardID: counter, cNum: counter, pair: 'b', x: x, y: y, xPos: xPos2, yPos: yPos2, visible: true });
                 containerNum++;
 
                 scene.groups.cardBacksGroup.add(cardBack);
+                scene.groups.additionBlackBGs.addMultiple([blackBG, blackBG2]);
                 scene.groups.cardsGroup.addMultiple([picA,picB,questionT,answerT, cardBGA, cardBGB]);
 
                 scene.groups.questions.add(picA); scene.groups.answers.add(picB);
@@ -849,20 +912,22 @@ var vars = {
                 playAgain = scene.add.bitmapText(150, 550, 'starFont', '@ Play Again? @', 142, 1).setAlpha(0).setName('playAgain').setTint(0xffff00).setInteractive();
             } else if (iC==='dragonsRR') {
                 wellDone = scene.add.bitmapText(110, 450, 'dragonFont', 'Well Done!\nYou completed it in\n' + _gV.moves + ' moves!', 142, 1).setAlpha(0).setName('wellDone').setScale(1.25,1);
-                playAgain = scene.add.bitmapText(250, 550, 'dragonFont', 'Play Again', 142, 1).setAlpha(0).setName('playAgain').setTint(0xffff00).setInteractive().setScale(1.73,1);
+                playAgain = scene.add.bitmapText(250, 550, 'dragonFont', 'Play Again?', 142, 1).setAlpha(0).setName('playAgain').setTint(0xffff00).setInteractive().setScale(1.73,1);
             } else if (iC==='toyStory') {
                 wellDone = scene.add.bitmapText(110, 450, 'toyStoryFont', 'Well Done!\nYou completed it in\n' + _gV.moves + ' moves!', 82, 1).setAlpha(0).setName('wellDone').setScale(1.25,1);
-                playAgain = scene.add.bitmapText(250, 550, 'toyStoryFont', 'Play Again', 76, 1).setAlpha(0).setName('playAgain').setInteractive().setScale(1.73,1);
+                playAgain = scene.add.bitmapText(250, 550, 'toyStoryFont', 'Play Again?', 76, 1).setAlpha(0).setName('playAgain').setInteractive().setScale(1.73,1);
             } else if (iC==='addition') {
                 wellDone = scene.add.bitmapText(110, 450, 'numbersFont', 'Well Done!\nYou got them all right!', 82, 1).setAlpha(0).setName('wellDone').setScale(1.25,1);
-                playAgain = scene.add.bitmapText(250, 550, 'numbersFont', 'Play Again', 76, 1).setAlpha(0).setName('playAgain').setInteractive().setScale(1.73,1);
+                playAgain = scene.add.bitmapText(250, 550, 'numbersFont', 'Play Again?', 76, 1).setAlpha(0).setName('playAgain').setInteractive().setScale(1.73,1);
             } else if (iC==='subtraction') {
                 wellDone = scene.add.bitmapText(110, 450, 'numbersFont', 'Well Done!\nYou got them all right!', 82, 1).setAlpha(0).setName('wellDone').setScale(1.25,1);
-                playAgain = scene.add.bitmapText(250, 550, 'numbersFont', 'Play Again', 76, 1).setAlpha(0).setName('playAgain').setInteractive().setScale(1.73,1);
+                playAgain = scene.add.bitmapText(250, 550, 'numbersFont', 'Play Again?', 76, 1).setAlpha(0).setName('playAgain').setInteractive().setScale(1.73,1);
             } else {
                 console.error('** The wellDone and playAgain wasnt set up! **');
                 return false;
             }
+            wellDone.setDepth(consts.depths.game+4);
+            playAgain.setDepth(consts.depths.game+4);
 
             // show the well done message
             let dV = vars.durations;
@@ -899,8 +964,13 @@ var vars = {
             }
 
             // START THE GAME
-            vars.game.drawCards();
-            vars.cards.allFaceDown();
+            let gameType = vars.imageSets.current;
+            if (gameType==='addition' || gameType==='subtraction') {
+                vars.cards.createAdditionPairs();
+            } else {
+                vars.game.drawCards();
+                vars.cards.allFaceDown();
+            }
             scene.particles = undefined;
         },
 
@@ -943,7 +1013,7 @@ var vars = {
                     vars.UI.showOptions();
                 } else if (card.name.includes('bgC_')===true) { 
                     vars.UI.changeBackground(card.name.replace('bgC_','').split('_'));
-                } else if (card.name==='cmd_batmanLego' || card.name==='cmd_starWarsLego' || card.name==='cmd_dragonsRR' || card.name==='cmd_toyStory') {
+                } else if (card.name==='cmd_batmanLego' || card.name==='cmd_starWarsLego' || card.name==='cmd_dragonsRR' || card.name==='cmd_toyStory' || card.name==='cmd_addition' || card.name==='cmd_subtraction') {
                     let reset = vars.localStorage.updateCardSet(card.name.replace('cmd_',''));
                     if (reset===false) { vars.UI.optionsHide(); }
                 } else if (card.name.includes('dif_')) {
@@ -1005,7 +1075,7 @@ var vars = {
                 alpha: { start: 1, end: 0 },
                 deathZone: { type: 'onLeave', source: window }
             });
-            scene.particles.snow.setDepth(20).setActive(false).setVisible(false);
+            scene.particles.snow.setDepth(consts.depths.snow).setActive(false).setVisible(false);
 
             // XMAS TREE
             let tree = new Phaser.Geom.Triangle.BuildEquilateral(0, -250, 400);
@@ -1054,10 +1124,6 @@ var vars = {
             });
         },
 
-        xmasTree: function() {
-            
-        },
-
         snowParticles: function() {
             if (scene.particles===undefined) { vars.particles.init(); }
 
@@ -1081,21 +1147,21 @@ var vars = {
         coinFallDuration: [1000,2000],
 
         init: function() {
-            // Options
-            scene.add.image(vars.canvas.cX, vars.canvas.cY, 'whitePixel').setTint(vars.UI.getBGColour()).setScale(vars.canvas.width, vars.canvas.height).setName('optionsBG').setAlpha(0.99).setVisible(false);
+            // Options Screen
+            scene.add.image(vars.canvas.cX, vars.canvas.cY, 'whitePixel').setDepth(consts.depths.options-1).setTint(vars.UI.getBGColour()).setScale(vars.canvas.width, vars.canvas.height).setName('optionsBG').setAlpha(0.99).setVisible(false);
 
             // Background Colours
             let x = 1340; let xInc=180; let realX=x;
             let y=200; let yInc=180;
             let m=0;
 
-            let bGTitle = scene.add.bitmapText(1270, 20, 'default', 'Backgrounds', 64, 1).setTint(0x0092DC).setName('bGTitle').setVisible(false).setDepth(11);
+            let bGTitle = scene.add.bitmapText(1270, 20, 'default', 'Backgrounds', 64, 1).setTint(0x0092DC).setName('bGTitle').setVisible(false).setDepth(consts.depths.options);
             scene.groups.bgOptions.add(bGTitle);
             for (s of vars.colours.backgrounds) {
                 let l=0;
                 for (c of s) {
                     realX=x+(l*xInc);
-                    let a = scene.add.image(realX,y,'bgColour').setTint(c[0]).setName('bgC_' + m + '_' + l).setVisible(false).setInteractive().setDepth(11);
+                    let a = scene.add.image(realX,y,'bgColour').setTint(c[0]).setName('bgC_' + m + '_' + l).setVisible(false).setInteractive().setDepth(consts.depths.options);
                     scene.groups.bgOptions.add(a);
                     l++;
                 }
@@ -1103,13 +1169,17 @@ var vars = {
             }
 
             // Card Set options
-            scene.add.bitmapText(190, 20, 'default', 'Select a card set...', 72, 1).setTint(0x0092DC).setName('optionsTitle').setVisible(false);
+            scene.add.bitmapText(190, 20, 'default', 'Select a card set...', 72, 1).setTint(0x0092DC).setName('optionsTitle').setVisible(false).setDepth(consts.depths.options);
+
+
+
+            // GAME SCREEN OPTIONS
             // Full Screen Icon
-            scene.add.image(1840,1000, 'fullScreenButton').setName('fullScreenButton').setData('fullScreen','false').setInteractive();
+            scene.add.image(1840,1000, 'fullScreenButton').setName('fullScreenButton').setData('fullScreen','false').setInteractive().setDepth(consts.depths.game);
             // Options Icon
-            scene.add.image(1430,1000,'optionsButton').setName('optionsButton').setInteractive();
+            scene.add.image(1430,1000,'optionsButton').setName('optionsButton').setInteractive().setDepth(consts.depths.game);
             // Restart Icon
-            scene.add.image(1640,1000, 'restartButton').setName('restartButton').setInteractive();
+            scene.add.image(1640,1000, 'restartButton').setName('restartButton').setInteractive().setDepth(consts.depths.game);
 
             vars.UI.difficultyOptions();
 
@@ -1119,7 +1189,7 @@ var vars = {
             let fontName = files.font[0];
             let welcomeMsg = 'Welcome to Match 2, Caleb' + files.paragraph + files.editionText;
             let wD = files.welcomeData;
-            scene.add.bitmapText(wD[0], wD[1], fontName, welcomeMsg, wD[2], wD[3]).setScale(wD[4],wD[5]).setName('welcomeText');
+            scene.add.bitmapText(wD[0], wD[1], fontName, welcomeMsg, wD[2], wD[3]).setScale(wD[4],wD[5]).setName('welcomeText').setDepth(consts.depths.game);
 
             // show the players current "points"
             let data = {
@@ -1136,7 +1206,7 @@ var vars = {
             let fontData = data[imageSetName];
             let tint = consts.getTint(points);
             let unlockText = vars.UI.setUnlockText();
-            let pointsText = scene.add.bitmapText(fontData.xy[0], fontData.xy[1], fontName, 'Points: ' + points + unlockText, fontData.fontSize).setTint(tint).setName('pointsText').setScale(fontData.scale[0],fontData.scale[1]);
+            let pointsText = scene.add.bitmapText(fontData.xy[0], fontData.xy[1], fontName, 'Points: ' + points + unlockText, fontData.fontSize).setTint(tint).setName('pointsText').setScale(fontData.scale[0],fontData.scale[1]).setDepth(consts.depths.game);
             if (unlockText.length>0) { 
                 pointsText.setInteractive();
             }
@@ -1199,17 +1269,17 @@ var vars = {
             let difList = gV.difficultyOptions;
             let x = 1340; let y = 785;
 
-            let difTitle = scene.add.bitmapText(x+20, y-100,'default','Difficulty',58).setTint(0x0092DC).setName('diftitle').setDepth(12).setVisible(false);
+            let difTitle = scene.add.bitmapText(x+20, y-100,'default','Difficulty',58).setTint(0x0092DC).setName('diftitle').setDepth(consts.depths.options).setVisible(false);
             scene.groups.bgOptions.add(difTitle);
             let c = 0;
             for (let d of difList) {
                 c++;
                 let frame=1;
                 if (d===gV.difficulty) { frame=0; }
-                let a = scene.add.image(x, y+40, 'difficultyButtons', frame).setDepth(11).setName('dif_' + d).setVisible(false).setInteractive();
+                let a = scene.add.image(x, y+40, 'difficultyButtons', frame).setDepth(consts.depths.options+1).setName('dif_' + d).setVisible(false).setInteractive();
                 let difficulty = d.capitalise();
                 if (d==='veryEasy') { difficulty='Very Easy'; }
-                let b = scene.add.bitmapText(x-150,y+15,'default',difficulty,42).setDepth(12).setName('dif_' + d).setVisible(false).setInteractive();
+                let b = scene.add.bitmapText(x-150,y+15,'default',difficulty,42).setDepth(consts.depths.options+2).setName('dif_' + d).setVisible(false).setInteractive();
                 scene.groups.bgOptions.addMultiple([a,b]);
                 if (c%2===0) { y+=95; x-=360; } else { x+=360; }
             }
@@ -1238,7 +1308,7 @@ var vars = {
                 c.destroy();
             })
             // get rid of the background
-            scene.children.getByName('optionsBG').setVisible(false).setDepth(10);
+            scene.children.getByName('optionsBG').setVisible(false).setDepth(consts.depths.options-1);
 
             // allow user to click on things again
             vars.input.enable();
@@ -1248,7 +1318,7 @@ var vars = {
             for (let c of vars.cards.options) { scene.children.getByName(c[0]).destroy(); }
             scene.children.getByName('optionsBG').setVisible(false);
             scene.children.getByName('optionsTitle').setVisible(false);
-            scene.groups.bgOptions.children.each( (c)=> { c.setVisible(false); })
+            scene.groups.bgOptions.children.each( (c)=> { c.setVisible(false); } )
         },
 
         pointsChange: function(_score) {
@@ -1277,30 +1347,35 @@ var vars = {
         },
 
         showOptions: function() {
-            let UIDepth = 10;
-            scene.children.getByName('optionsBG').setVisible(true).setDepth(UIDepth);
+            let UIDepth = consts.depths.options;
+            scene.children.getByName('optionsBG').setVisible(true).setDepth(UIDepth-1);
             scene.children.getByName('optionsTitle').setVisible(true).setDepth(UIDepth);
             scene.groups.bgOptions.children.each( (c)=> { c.setVisible(true); })
             let cV = vars.cards;
             let gameTypes=[];
             let xSpacing = [[],[],[-200,200],[-300,0,300]];
+            let div = -1;
             // with these we can deal with anything up to 10 different card sets
             // The order (3,5,2,7) is important. It allows groups of 3 and 5 to be created before groups of 2
             if (cV.options.length%3===0) { // 3 6 or 9 games
                 if (vars.DEBUG===true) { console.log('3\'s'); }
                 gameTypes.push(3);
+                div=3;
             } else if (cV.options.length%5===0) { // 5, a special case of a 2 followed by a 3
                 if (vars.DEBUG===true) { console.log('5\'s'); }
                 gameTypes.push([2,3]);
+                div=5;
             } else if (cV.options.length%2===0) {
                 if (vars.DEBUG===true) { console.log('2\'s'); }
                 gameTypes.push(2);
+                div=2;
             } else if (cV.options.length%7===0) { // 7, another special case of 2,3,2
                 if (vars.DEBUG===true) { console.log('7\'s'); }
                 gameTypes.push([2,3,2]);
+                div=7;
             }
 
-            let dupeCount = cV.options.length/2;
+            let dupeCount = cV.options.length/div;
             if (dupeCount>1) {
                 for (let d=1; d<dupeCount; d++) {
                     gameTypes.push(gameTypes[0]);
@@ -1329,14 +1404,14 @@ var vars = {
                 return false;
             }
             vars.input.disable();
-            scene.children.getByName('optionsBG').setVisible(true).setDepth(10);
+            scene.children.getByName('optionsBG').setVisible(true).setDepth(consts.depths.options);
 
             // HEADING
             vars.UI.showUpgradesHeader(false);
 
             // close button
-            let a = scene.add.image(vars.canvas.cX,vars.canvas.height-50,'difficultyButtons',0).setDepth(20).setName('ulClose').setInteractive();
-            let b = scene.add.bitmapText(vars.canvas.cX-95,vars.canvas.height-80,'default','CLOSE', 48).setDepth(20).setName('ulClose').setInteractive();
+            let a = scene.add.image(vars.canvas.cX,vars.canvas.height-50,'difficultyButtons',0).setDepth(consts.depths.options).setName('ulClose').setInteractive();
+            let b = scene.add.bitmapText(vars.canvas.cX-95,vars.canvas.height-80,'default','CLOSE', 48).setDepth(consts.depths.options).setName('ulClose').setInteractive();
             scene.groups.upgrades.addMultiple([a,b]);
 
             // how many upgrades for the current game do we have?
@@ -1371,7 +1446,7 @@ var vars = {
                             let x = xMin + (col*xInc); let y = yMin + (row*yInc);
                             if (vars.DEBUG===true) { console.log('Position: ' + position + '. Unlock ID: ' + unlockID + '. Card letter: ' + cardLetter + '. xy: ' + x + ',' + y + '. Unlock: ' + unlock); }
                             // TODO BEGIN HERE
-                            let u = scene.add.image(x,y,_upgradeFor, 'card' + cardLetter).setName('unlockable').setData({ name: unlock, cID: unlockID }).setDepth(20).setInteractive();
+                            let u = scene.add.image(x,y,_upgradeFor, 'card' + cardLetter).setName('unlockable').setData({ name: unlock, cID: unlockID }).setDepth(consts.depths.options).setInteractive();
                             scene.groups.upgrades.add(u);
                         }
                     }
@@ -1385,7 +1460,7 @@ var vars = {
             let multi = 'S'
             if (unlocksLeft===1) { multi = ''; }
             if (_update===false) {
-                let h = scene.add.bitmapText(30,20,'default','YOU CAN UNLOCK ' + unlocksLeft + ' CARD' + multi,62).setDepth(20).setName('ulHeader');
+                let h = scene.add.bitmapText(30,20,'default','YOU CAN UNLOCK ' + unlocksLeft + ' CARD' + multi,62).setDepth(consts.depths.options).setName('ulHeader');
                 scene.groups.upgrades.add(h);
             } else {
                 scene.children.getByName('ulHeader').setText('YOU CAN UNLOCK ' + unlocksLeft + ' CARD' + multi);

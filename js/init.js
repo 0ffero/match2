@@ -95,6 +95,8 @@ function create() {
     scene.groups.coins = scene.add.group();
     scene.groups.upgrades = scene.add.group();
 
+    scene.groups.additionBlackBGs = scene.add.group();
+
     // DRAW GAME BOARD
     if (numbersGame === false) { vars.game.drawCards(); } else { vars.cards.createAdditionPairs(); }
 
