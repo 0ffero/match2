@@ -478,12 +478,8 @@ vars.localStorage = {
             // was a valid card set found that wasnt already selected?
             if (valid===true) { lS.match2_selectedGame=_cardSet; needsReset=true; vars.imageSets.current=_cardSet; } else { return false; }
             // we need to delete the old cardBack and Alt
-            for (image of vars.files.destroy.images) {
-                scene.textures.removeKey(image);
-            }
-            for (s of vars.files.destroy.sounds) {
-                scene.cache.audio.remove(s);
-            }
+            for (image of vars.files.destroy.images) { scene.textures.removeKey(image); }
+            for (sound of vars.files.destroy.sounds) { scene.cache.audio.remove(sound); }
             if (needsReset===true) { vars.game.reset(); } else { return false; }
         } else {
             return false;

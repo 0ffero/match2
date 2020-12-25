@@ -879,6 +879,14 @@ var vars = {
             if (iC==='addition' || iC==='subtraction') {
                 // when the player wins a game of addition or subtraction they unlock the current background
                 vars.localStorage.backgroundsForNumbersUpdate();
+                let bg = scene.children.getByName('numbersBG');
+                scene.tweens.add({
+                    targets: bg,
+                    x: bg.x+95,
+                    y: bg.y-95,
+                    scale: 1.1,
+                    duration: 2000
+                })
             } else {
                 vars.game.getScore();
                 vars.localStorage.checkForBestScore();
