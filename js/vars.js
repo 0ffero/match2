@@ -103,6 +103,14 @@ var vars = {
             let duration = vars.durations.moveToWinPosition;
             scene.tweens.add({ targets: cardA, x: x, y: y, scale: 0.5, rotation: Math.PI*3+rndAngle, ease: 'Cubic.easeOut', duration: duration });
             scene.tweens.add({ targets: cardB, x: x+10, y: y+10, scale: 0.5, rotation: Math.PI*3+rndAngle, ease: 'Cubic.easeOut', duration: duration });
+
+            
+            if (_numbers===true) {
+                scene.groups.cardBacksGroup.children.each( (c)=> {
+                    if (c.name==='cardB_C_' + _cardNumber + '_answer') { c.destroy(); }
+                });
+                vars.animate.numbersAnswersToFaceDown();
+            }
         },
 
         numberCardsToInitState: function() {
@@ -116,13 +124,22 @@ var vars = {
 
             // front of cards
             scene.containers.numberContainers.forEach( (c)=> {
-                if (c.name.includes('question')) {
-                    scene.tweens.add({ targets: c, delay: startUpDelay, scaleX: 0.0, duration: duration/2 })
-                } else { // this is an answer card
-                    // blank and fade out the answer cards
-                    scene.tweens.add({ targets: c, delay: startUpDelay, alpha: 0.3, duration: duration/2 })
-                }
+                scene.tweens.add({ targets: c, delay: startUpDelay, scaleX: 0, duration: duration/2 })
             });
+        },
+
+        numbersAnswersToFaceDown: function() {
+            let duration = vars.durations.turnDuration;
+            scene.groups.cardBacksGroup.children.each( (c)=> {
+                if (c.name.includes('answer')) {
+                    scene.tweens.add({ targets: c, delay: duration/2, scaleX: 1, duration: duration/2 })
+                }
+            })
+            scene.containers.numberContainers.forEach( (c)=> {
+                if (c.name.includes('answer')) {
+                    scene.tweens.add({ targets: c, scaleX: 0, duration: duration/2 })
+                }
+            })
         },
 
         spawnCoins: function() {
@@ -169,37 +186,18 @@ var vars = {
             scene.tweens.add({ targets: [back1,back2], delay: duration*4, scaleX: 1, duration: duration, onComplete: vars.input.enable })
         },
 
-        toDefaultStateNumbers: function(_question, _questionBack, _answer) {
+        toDefaultStateNumbers: function(_question, _questionBack, _answer, _answerBack) {
             let questionFront = scene.children.getByName(_question);
             let questionBack = scene.children.getByName(_questionBack);
-            let answerCard = scene.children.getByName(_answer);
             questionBack.setData('clicked', undefined);
 
-            let duration = vars.durations.turnDuration/2;
+            let duration = vars.durations.turnDuration;
 
             // tween the selected question back to default
-            scene.tweens.add({
-                targets: questionFront,
-                scaleX: 0,
-                duration: duration/2
-            })
-            questionBack.setAlpha(1);
-            scene.tweens.add({
-                targets: questionBack,
-                delay: duration/2,
-                scaleX: 1,
-                duration: duration/2
-            })
+            scene.tweens.add({ targets: questionFront, scaleX: 0, duration: duration/2 })
+            scene.tweens.add({ targets: questionBack, delay: duration/2, scaleX: 1, duration: duration/2 })
 
-            // fade in all the questions
-            scene.groups.answers.children.each( (c)=>{
-                scene.tweens.add({
-                    targets: c,
-                    alpha: 1,
-                    duration: duration/2
-                })
-            })
-
+            vars.animate.numbersAnswersToFaceDown();
             vars.cards.selected = [];
             vars.cards.selectedPair = [];
         },
@@ -367,8 +365,9 @@ var vars = {
             if (cNum1===cNum2 && cPair1!==cPair2) { // this is a pair, check that we have an answer and a question (basic sanity check)
                 cV.checkForPair(true);
                 // disable these cards
-                scene.children.getByName('cardB_C_' + cNum1 + '_question').disableInteractive();
-                scene.children.getByName('cardB_' + cNum2 + '_answer').disableInteractive();
+                scene.children.getByName('cardB_C_' + cNum1 + '_question').disableInteractive().setName('found_' + cNum1 + '_a');
+                scene.children.getByName('cardB_' + cNum2 + '_answer').disableInteractive().setName('found_' + cNum2 + '_b');
+
                 // slowly fade out the black pixel for the pair
                 let cb1 = scene.children.getByName('cardBlackBG_' + cNum1 + '_1');
                 let cb2 = scene.children.getByName('cardBlackBG_' + cNum1 + '_2');
@@ -383,7 +382,8 @@ var vars = {
                 let container1 = 'cardB_C_' + cNum1 + '_question';
                 let card1Back = 'cardB_' + cNum1 + '_question';
                 let container2 = 'cardB_' + cNum2 + '_answer';
-                vars.animate.toDefaultStateNumbers(container1, card1Back, container2);
+                let card2Back = 'cardB_' + cNum2 + '_answer';
+                vars.animate.toDefaultStateNumbers(container1, card1Back, container2, card2Back);
             }
         },
 
@@ -497,6 +497,22 @@ var vars = {
             return consts[vars.game.difficulty].cardCost;
         },
 
+        showAnswerCards: function(_duration) {
+            // TURN THE ANSWER CARDS
+            scene.containers.numberContainers.forEach( (c)=> {
+                // answer side
+                if (c.name.includes('answer')) {
+                    scene.tweens.add({ targets: c, delay: _duration/2, scaleX: 1, duration: _duration/2 })
+                }
+            });
+            // card backs
+            scene.groups.cardBacksGroup.children.each( (c)=> {
+                if (c.name.includes('answer')) {
+                    scene.tweens.add({ targets: c, scaleX: 0, duration: _duration/2 })
+                }
+            })
+        },
+
         showCardBacks: function() {
             // set all backs to visible
             scene.groups.cardBacksGroup.children.each( (c)=> {
@@ -531,7 +547,7 @@ var vars = {
         showThisCardNumbers: function(_card) {
             if (vars.input.enabled===false) { return false; }
             let cV = vars.cards;
-            if (_card.name.includes('question')) { // question card
+            if (_card.name.includes('question')) { // QUESTION CARD
                 if (_card.name.includes('question') && cV.selectedPair.length===1) { return false; }
                 if (vars.DEBUG===true) { console.log('Showing This card (' + _card.name + ')'); }
                 let cardName = _card.name;
@@ -546,43 +562,35 @@ var vars = {
                 if (vars.DEBUG===true) { console.log('Looking for ' + cardName); }
                 let card = scene.children.getByName(cardName);
 
-                let duration = vars.durations.turnDuration/2;
+                let duration = vars.durations.turnDuration;
 
                 scene.sound.play('cardTurn');
 
                 // we now have the back of the card as "_card" and the front as "card"
-                scene.tweens.add({ targets: _card, scaleX: 0, duration: duration })
-                scene.tweens.add({ targets: card, delay: duration, scaleX: 1, duration: duration })
+                scene.tweens.add({ targets: _card, scaleX: 0, duration: duration/2 })
+                scene.tweens.add({ targets: card, delay: duration/2, scaleX: 1, duration: duration/2 })
 
                 // fade out all the answer cards
                 scene.groups.cardBacksGroup.children.each( (c)=>{
                     scene.tweens.add({ targets: c, alpha: 0.5, duration: duration/2 })
                 })
-                scene.containers.numberContainers.forEach( (c)=> {
-                    if (c.name.includes('answer')) {
-                        // highlight the answer cards
-                        scene.tweens.add({ targets: c, alpha: 1.0, duration: duration/2 })
-                    }
-                });
-            } else { // answer card
+
+                // show the answer cards
+                vars.cards.showAnswerCards(duration);
+            } else { // ANSWER CARD
                 // check that the question card has been shown
                 if (cV.selectedPair.length===1) { // they have already selected a question, check for pair
                     cV.addCardToSelectedNumbers(_card);
 
                     // highlight the question cards again
-                    let duration = vars.durations.turnDuration/2;
+                    let duration = vars.durations.turnDuration;
                     scene.groups.cardBacksGroup.children.each( (c)=>{
-                        scene.tweens.add({ targets: c, alpha: 1, duration: duration })
+                        scene.tweens.add({ targets: c, alpha: 1, duration: duration/2 })
                     })
-                    scene.containers.numberContainers.forEach( (c)=> {
-                        if (c.name.includes('answer')) {
-                            // highlight the answer cards
-                            scene.tweens.add({ targets: c, alpha: 0.5, duration: duration })
-                        }
-                    });
+
                 } else { // theyve clicked on an answer first. Show warning
                     let warn = scene.containers.warningContainer;
-                    if (warn.alpha===0) { scene.tweens.add({ targets: warn, alpha: 1, ease: 'Expo.easeOut', duration: 1500, yoyo: true }) }
+                    if (warn.alpha===0) { scene.tweens.add({ targets: warn, alpha: 1, ease: 'Expo.easeOut', duration: 1000, yoyo: true }) }
                 }
             }
         },
@@ -644,7 +652,7 @@ var vars = {
         },
 
         bgInitNumbers: function() {
-            let xWidth = 1205;
+            let xWidth = 1200;
             let bgs = vars.files.backgrounds.list[0];
             let bgName = Phaser.Math.RND.pick(bgs);
             let randomID = generateRandomID();
@@ -760,60 +768,35 @@ var vars = {
             // first create a background if one doesnt exist
             vars.game.bgInitNumbers();
 
+            // initialise variables
             gV.moves=0;
-            let xyOffset = 1; let xInc = cV.cardWidth+xyOffset; let yInc = cV.cardHeight+xyOffset; let yPush = 70;
+            let xyOffset = 0; let xInc = cV.cardWidth+xyOffset; let yInc = cV.cardHeight+xyOffset; let yPush = 70;
             let cCX = cV.cardWidth/2 + 10; let cCY = cV.cardHeight/2 + 10;
             let difficulty = gV.difficulty;
 
             cV.cardPosArray = Phaser.Utils.Array.NumberArray(0,17);
             let cardPosArray = cV.cardPosArray;
 
+            // select the card border
             let cardFrame = -1;
-            switch (difficulty) { // select the card border
+            switch (difficulty) {
                 case 'veryEasy': cardFrame=0; break;
                 case 'easy': cardFrame=1; break;
                 case 'normal': cardFrame=2; break;
                 case 'hard': cardFrame=3; break;
             }
 
+            // create the groups
+            vars.groups.additionGroupsCreate();
+
+            // create the containers
+            vars.containers.additionContainersCreate();
+
             let counter=0;
-            if (scene.groups.questions===undefined) { // this is the first time weve entered this function, so we need to create the groups and containers
-                scene.groups.questions = scene.add.group();
-                scene.groups.answers = scene.add.group();
-            } else { // empty out the two card groups
-                scene.groups.questions.children.each( (c)=> {
-                    c.destroy();
-                })
-                scene.groups.answers.children.each( (c)=> {
-                    c.destroy();
-                })
-            }
-
-            if (scene.containers===undefined) {
-                scene.containers = { numberContainers: [] }
-                scene.containers.warningContainer = scene.add.container().setName('warningContainer');
-                let warningBG = scene.add.image(0,0,'warningBG',0).setName('warningBG').setScale(1.3,1);
-                let warn = scene.add.bitmapText(0,0,'numbersFont','Turn over a question card first :)',58).setOrigin(0.5, 0.5).setName('numbersWarning').setTint(0xff0000);
-                scene.containers.warningContainer.add([warningBG,warn]).setDepth(dC.game+2).setPosition(650,495).setSize(830,106).setAlpha(0);
-            } else {
-                scene.containers.numberContainers.forEach( (c)=> {
-                    c.destroy();
-                })
-                scene.containers.numberContainers = [];
-                // empty out the contents of the blackBGs
-                scene.groups.additionBlackBGs.children.each( (c)=> {
-                    c.destroy();
-                })
-            }
-
-            // build the containers
-            let sC = scene.containers;
-            for (let c=0; c<18; c++) { // create the containers
-                sC.numberContainers.push(scene.add.container().setName('container_' + c));
-            }
-
             let containerNum=0;
+            let sC = scene.containers;
             let containers = sC.numberContainers;
+            let depth = consts.depths;
             // as cards are added to containers all x,y vals are 0,0. We then move the container to the real x,y
             for (let card in cardDeck) {
                 if (vars.DEBUG===true) { console.log('Creating card'); }
@@ -836,12 +819,12 @@ var vars = {
                 let xPos1 = pos1%6; let yPos1 = ~~(pos1/6);
                 let xPos2 = pos2%6; let yPos2 = ~~(pos2/6);
 
-                // place the 2 cards
-                // card 1
+                // CREATE PLACE THE 2 CARDS
+                // CARD 1
                 let x = xPos1 * xInc + cCX; let y = yPos1 * yInc + cCY; y+=yPush;
                 // the back of the card
-                let blackBG = scene.add.image(x,y,'whitePixel').setScale(200,260).setTint(0x000000).setName('cardBlackBG_' + counter + '_1').setDepth(consts.depths.game-1);
-                let cardBack = scene.add.sprite(x,y,'cardNumbers',4).setName('cardB_' + counter + '_question').setDepth(consts.depths.game-1).setScale(0,1).setInteractive().setData({ cardID: counter, cNum: counter, pair: 'a', x: x, y: y, xPos: xPos1, yPos: yPos1 });
+                let blackBG = scene.add.image(x,y,'whitePixel').setScale(200,260).setTint(0x000000).setName('cardBlackBG_' + counter + '_1').setDepth(depth.game-1);
+                let cardBack = scene.add.sprite(x,y,'cardNumbers',4).setName('cardB_' + counter + '_question').setDepth(depth.game-1).setScale(0,1).setInteractive().setData({ cardID: counter, cNum: counter, pair: 'a', x: x, y: y, xPos: xPos1, yPos: yPos1 });
 
                 // the actual card
                 let picA = scene.add.sprite(0,0,'cardNumbers', 5).setName('cardBN_' + counter + '_a');
@@ -859,10 +842,11 @@ var vars = {
                 containerNum++;
 
 
-                // card 2
+                // CARD 2
                 x = xPos2 * xInc + cCX; y = yPos2 * yInc + cCY; y+=yPush;
                 // the back of the card
-                let blackBG2 = scene.add.image(x,y,'whitePixel').setScale(200,260).setTint(0x000000).setName('cardBlackBG_' + counter + '_2').setDepth(consts.depths.game-1);
+                let blackBG2 = scene.add.image(x,y,'whitePixel').setScale(200,260).setTint(0x000000).setName('cardBlackBG_' + counter + '_2').setDepth(depth.game-1);
+                let cardBack2 = scene.add.sprite(x,y,'cardNumbers',6).setName('cardB_C_' + counter + '_answer').setDepth(depth.game-1).setScale(0,1).setInteractive();
                 let picB = scene.add.sprite(0,0,'cardNumbers', cardFrame).setName('cardB_' + counter + '_b');
                 let textTint = 0xFFFFFF;
                 if (difficulty==='veryEasy') { textTint = 0xFFFF00; }
@@ -874,7 +858,7 @@ var vars = {
                 container.add([picB, cardBGB, answerT]).setSize(200,260).setPosition(x,y).setName('cardB_' + counter + '_answer').setDepth(dC.game).setInteractive().setData({ cardID: counter, cNum: counter, pair: 'b', x: x, y: y, xPos: xPos2, yPos: yPos2, visible: true });
                 containerNum++;
 
-                scene.groups.cardBacksGroup.add(cardBack);
+                scene.groups.cardBacksGroup.addMultiple([cardBack, cardBack2]);
                 scene.groups.additionBlackBGs.addMultiple([blackBG, blackBG2]);
                 scene.groups.cardsGroup.addMultiple([picA,picB,questionT,answerT, cardBGA, cardBGB]);
 

@@ -11,6 +11,35 @@ vars.colours = {
     ]
 }
 
+vars.containers = {
+
+    additionContainersCreate: function() {
+        let dC = consts.depths;
+        if (scene.containers===undefined) {
+            scene.containers = { numberContainers: [] }
+            scene.containers.warningContainer = scene.add.container().setName('warningContainer');
+            let warningBG = scene.add.image(0,0,'warningBG',0).setName('warningBG').setScale(1.3,1);
+            let warn = scene.add.bitmapText(0,0,'numbersFont','Turn over a question card first :)',58).setOrigin(0.5, 0.5).setName('numbersWarning').setTint(0xff0000);
+            scene.containers.warningContainer.add([warningBG,warn]).setDepth(dC.game+2).setPosition(650,495).setSize(830,106).setAlpha(0);
+        } else {
+            scene.containers.numberContainers.forEach( (c)=> {
+                c.destroy();
+            })
+            scene.containers.numberContainers = [];
+            // empty out the contents of the blackBGs
+            scene.groups.additionBlackBGs.children.each( (c)=> {
+                c.destroy();
+            })
+        }
+
+        // build the containers
+        let sC = scene.containers;
+        for (let c=0; c<18; c++) { // create the containers
+            sC.numberContainers.push(scene.add.container().setName('container_' + c));
+        }
+    }
+}
+
 vars.convertors = {
     fromLetterToFrame: function(_letter) {
         return _letter.charCodeAt(0);
@@ -232,6 +261,16 @@ vars.groups = {
         selectedGroup.children.each( (c)=> {
             c.destroy();
         })
+    },
+
+    additionGroupsCreate: function() {
+        if (scene.groups.questions===undefined) { // this is the first time weve entered this function, so we need to create the groups and containers
+            scene.groups.questions = scene.add.group();
+            scene.groups.answers = scene.add.group();
+        } else { // empty out the two card groups
+            scene.groups.questions.children.each( (c)=> { c.destroy(); })
+            scene.groups.answers.children.each( (c)=> { c.destroy(); })
+        }
     }
 }
 
