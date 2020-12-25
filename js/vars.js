@@ -933,6 +933,11 @@ var vars = {
             vars.game.moves=0;
             vars.cards.buildDefaultArrays();
 
+            // if the last game was addition then there will be a background
+            if (scene.children.getByName('numbersBG')!==null) {
+                scene.children.getByName('numbersBG').destroy();
+            }
+
             // empty out the groups
             let groups = scene.groups;
             groups.cardsGroup.children.each( (c)=> { c.destroy(); }); groups.cardsGroup.clear();

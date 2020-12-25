@@ -476,7 +476,7 @@ vars.localStorage = {
             let valid = false;
             for (avail of vars.imageSets.available) { if (_cardSet===avail) { valid=true; break; } }
             // was a valid card set found that wasnt already selected?
-            if (valid===true) { lS.match2_selectedGame=_cardSet; needsReset=true; } else { return false; }
+            if (valid===true) { lS.match2_selectedGame=_cardSet; needsReset=true; vars.imageSets.current=_cardSet; } else { return false; }
             // we need to delete the old cardBack and Alt
             for (image of vars.files.destroy.images) {
                 scene.textures.removeKey(image);
