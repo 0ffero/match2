@@ -27,6 +27,11 @@ var config = {
         preload: preload,
         create: create,
         update: main,
+        pack: {
+            files: [
+                { type: 'image', key: 'loadingImage', url: 'assets/images/introScreen.jpg' }
+            ]
+        }
     }
 };
 
@@ -42,6 +47,7 @@ var game = new Phaser.Game(config);
 */
 function preload() {
     scene = this;
+    scene.add.image(vars.canvas.cX, vars.canvas.cY, 'loadingImage')
     scene.load.setPath('assets');
 
     // Check the local storage
