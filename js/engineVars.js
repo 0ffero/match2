@@ -187,6 +187,34 @@ vars.files = {
         }
     },
 
+    floorIsLava: {
+        cardType: 'atlas',
+        editionText: 'Floor Is Lava Edition',
+        paragraph: '\n',
+        welcomeData: [100, 920, 60, 1, 1.3, 0.95],
+        images: [
+            ['cardBack','images/floorIsLavaCardBack.png'],
+            ['cardBackAlt','images/floorIsLavaCardBackSilver.png'],
+        ],
+        cards: {
+            atlas: ['floorIsLava','imageSets/floorIsLava.png','imageSets/floorIsLava.json']
+        },
+        font: ['numbersFont', 'fonts/numbersFont.png', 'fonts/numbersFont.xml'],
+        sounds: {
+            good: [],
+            bad:  [],
+            win:  'lavaWin.ogg',
+            init: function() {
+                this.bad = Phaser.Utils.Array.NumberArray(1,11,'lavaNo','.ogg');
+                this.good = Phaser.Utils.Array.NumberArray(1,15,'lavaYes','.ogg');
+            }
+        },
+
+        init: function() {
+            this.sounds.init();
+        }
+    },
+
     starWarsLego: {
         cardType: 'atlas',
         editionText: 'Lego Star Wars Edition',
@@ -246,6 +274,7 @@ vars.files = {
         switch (vars.imageSets.current) {
             case 'batmanLego':   files = vars.files.batman;                     multiLoader(files); break;
             case 'dragonsRR':    files = vars.files.dragons;      files.init(); multiLoader(files); break;
+            case 'floorIsLava':  files = vars.files.floorIsLava;  files.init(); multiLoader(files); break;
             case 'starWarsLego': files = vars.files.starWarsLego;               multiLoader(files); break;
             case 'toyStory':     files = vars.files.toyStory;     files.init(); multiLoader(files); break;
 
@@ -275,8 +304,8 @@ vars.groups = {
 }
 
 vars.imageSets = {
-    available: ['batmanLego','starWarsLego', 'dragonsRR', 'toyStory','addition','subtraction'],
-    fileName: ['batman','starWarsLego','dragons','toyStory','addition','subtraction'],
+    available: ['batmanLego','starWarsLego', 'dragonsRR', 'toyStory','addition','subtraction','floorIsLava'],
+    fileName: ['batman','starWarsLego','dragons','toyStory','addition','subtraction','floorIsLava'],
     current: 'dragonsRR',
     currentFName: -1,
 

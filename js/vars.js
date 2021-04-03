@@ -275,6 +275,7 @@ var vars = {
             ['cmd_starWarsLego','starWarsButton'],
             ['cmd_dragonsRR', 'dragonsButton'],
             ['cmd_toyStory', 'toyStoryButton'],
+            ['cmd_floorIsLava', 'floorIsLavaButton'],
             ['cmd_addition', 'additionButton'],
             ['cmd_subtraction', 'subtractionButton']
         ],
@@ -880,13 +881,7 @@ var vars = {
                 // when the player wins a game of addition or subtraction they unlock the current background
                 vars.localStorage.backgroundsForNumbersUpdate();
                 let bg = scene.children.getByName('numbersBG');
-                scene.tweens.add({
-                    targets: bg,
-                    x: bg.x+95,
-                    y: bg.y-95,
-                    scale: 1.1,
-                    duration: 2000
-                })
+                scene.tweens.add({ targets: bg, x: bg.x+95, y: bg.y-95, scale: 1.1, duration: 2000 })
             } else {
                 vars.game.getScore();
                 vars.localStorage.checkForBestScore();
@@ -905,6 +900,9 @@ var vars = {
             } else if (iC==='dragonsRR') {
                 wellDone = scene.add.bitmapText(110, 450, 'dragonFont', 'Well Done!\nYou completed it in\n' + _gV.moves + ' moves!', 142, 1).setAlpha(0).setName('wellDone').setScale(1.25,1);
                 playAgain = scene.add.bitmapText(250, 550, 'dragonFont', 'Play Again?', 142, 1).setAlpha(0).setName('playAgain').setTint(0xffff00).setInteractive().setScale(1.73,1);
+            } else if (iC==='floorIsLava') {
+                wellDone = scene.add.bitmapText(110, 450, 'numbersFont', 'Well Done!\nYou got them all right!', 76, 1).setAlpha(0).setName('wellDone').setScale(1.25,1);
+                playAgain = scene.add.bitmapText(250, 550, 'numbersFont', 'Play Again?', 76, 1).setAlpha(0).setName('playAgain').setInteractive().setScale(1.73,1);
             } else if (iC==='toyStory') {
                 wellDone = scene.add.bitmapText(110, 450, 'toyStoryFont', 'Well Done!\nYou completed it in\n' + _gV.moves + ' moves!', 82, 1).setAlpha(0).setName('wellDone').setScale(1.25,1);
                 playAgain = scene.add.bitmapText(250, 550, 'toyStoryFont', 'Play Again?', 76, 1).setAlpha(0).setName('playAgain').setInteractive().setScale(1.73,1);
@@ -1010,7 +1008,7 @@ var vars = {
                     vars.UI.showOptions();
                 } else if (card.name.includes('bgC_')===true) { 
                     vars.UI.changeBackground(card.name.replace('bgC_','').split('_'));
-                } else if (card.name==='cmd_batmanLego' || card.name==='cmd_starWarsLego' || card.name==='cmd_dragonsRR' || card.name==='cmd_toyStory' || card.name==='cmd_addition' || card.name==='cmd_subtraction') {
+                } else if (card.name==='cmd_floorIsLava' || card.name==='cmd_batmanLego' || card.name==='cmd_starWarsLego' || card.name==='cmd_dragonsRR' || card.name==='cmd_toyStory' || card.name==='cmd_addition' || card.name==='cmd_subtraction') {
                     let reset = vars.localStorage.updateCardSet(card.name.replace('cmd_',''));
                     if (reset===false) { vars.UI.optionsHide(); }
                 } else if (card.name.includes('dif_')) {
@@ -1042,36 +1040,8 @@ var vars = {
             //scene.particles.rain = scene.add.particles('flares');
             let window = new Phaser.Geom.Rectangle(-50, -100, vars.canvas.width+100, vars.canvas.height+200);
 
-            scene.particles['snow'].createEmitter({
-                frame: Phaser.Utils.Array.NumberArray(0, 5),//.concat('blue', 'white'),
-                y: -32,
-                x: { min: 0, max: vars.canvas.width },
-                rotate: { start: 0, end: 360 },
-                lifespan: 25000,
-                speedX: -20,
-                speedY: { min: 20, max: 100 },
-                scale: { min: 0.3, max: 0.5 },
-                blendMode: 'ADD',
-                quantity: 1,
-                frequency: 400,
-                alpha: { start: 1, end: 0 },
-                deathZone: { type: 'onLeave', source: window }
-            });
-            scene.particles['snow'].createEmitter({
-                frame: Phaser.Utils.Array.NumberArray(0, 5),//.concat('blue', 'white'),
-                y: -32,
-                x: { min: 0, max: vars.canvas.width },
-                rotate: { min: 0, max: 200 },
-                lifespan: 12500,
-                speedX: -20,
-                speedY: { min: 100, max: 200 },
-                scale: { min: 0.8, max: 1.2 },
-                blendMode: 'ADD',
-                quantity: 1,
-                frequency: 200,
-                alpha: { start: 1, end: 0 },
-                deathZone: { type: 'onLeave', source: window }
-            });
+            scene.particles['snow'].createEmitter({ frame: Phaser.Utils.Array.NumberArray(0, 5), y: -32, x: { min: 0, max: vars.canvas.width }, rotate: { start: 0, end: 360 }, lifespan: 25000, speedX: -20, speedY: { min: 20, max: 100 }, scale: { min: 0.3, max: 0.5 }, blendMode: 'ADD', quantity: 1, frequency: 400, alpha: { start: 1, end: 0 }, deathZone: { type: 'onLeave', source: window } });
+            scene.particles['snow'].createEmitter({ frame: Phaser.Utils.Array.NumberArray(0, 5), y: -32, x: { min: 0, max: vars.canvas.width }, rotate: { min: 0, max: 200 }, lifespan: 12500, speedX: -20, speedY: { min: 100, max: 200 }, scale: { min: 0.8, max: 1.2 }, blendMode: 'ADD', quantity: 1, frequency: 200, alpha: { start: 1, end: 0 }, deathZone: { type: 'onLeave', source: window } });
             scene.particles.snow.setDepth(consts.depths.snow).setActive(false).setVisible(false);
 
             // XMAS TREE
@@ -1079,46 +1049,9 @@ var vars = {
             let trunk = new Phaser.Geom.Rectangle(0, 0, 80, 80);
 
             scene.particles.xmasTree = scene.add.particles('flares');
-
-            scene.particles.xmasTree.createEmitter({
-                frame: 'green',
-                x: 1620, y: 500,
-                speed: 0,
-                lifespan: 2000,
-                delay: 2000,
-                quantity: 48,
-                frequency: 2000,
-                delay: 500,
-                scale: { start: 0.2, end: 0.1 },
-                blendMode: 'ADD',
-                emitZone: { type: 'edge', source: tree, quantity: 48 }
-            });
-
-            scene.particles.xmasTree.createEmitter({
-                frame: 'red',
-                tint: 0xffff00,
-                x: 1580, y: 620,
-                speed: 0,
-                alpha: 0.4,
-                lifespan: 500,
-                delay: 500,
-                frequency: 0,
-                quantity: 1,
-                scale: 0.2,
-                blendMode: 'ADD',
-                emitZone: { type: 'edge', source: trunk, quantity: 48 }
-            });
-
-            scene.particles.xmasTree.createEmitter({
-                frame: 'red',
-                x: 1620, y: 500,
-                lifespan: 500,
-                quantity: 1,
-                frequency: 200,
-                scale: 0.6,
-                blendMode: 'ADD',
-                emitZone: { type: 'edge', source: tree, quantity: 12 }
-            });
+            scene.particles.xmasTree.createEmitter({ frame: 'green', x: 1620, y: 500, speed: 0, lifespan: 2000, delay: 2000, quantity: 48, frequency: 2000, delay: 500, scale: { start: 0.2, end: 0.1 }, blendMode: 'ADD', emitZone: { type: 'edge', source: tree, quantity: 48 } });
+            scene.particles.xmasTree.createEmitter({ frame: 'red', tint: 0xffff00, x: 1580, y: 620, speed: 0, alpha: 0.4, lifespan: 500, delay: 500, frequency: 0, quantity: 1, scale: 0.2, blendMode: 'ADD', emitZone: { type: 'edge', source: trunk, quantity: 48 } });
+            scene.particles.xmasTree.createEmitter({ frame: 'red', x: 1620, y: 500, lifespan: 500, quantity: 1, frequency: 200, scale: 0.6, blendMode: 'ADD', emitZone: { type: 'edge', source: tree, quantity: 12 } });
         },
 
         snowParticles: function() {
@@ -1194,6 +1127,7 @@ var vars = {
                 subtraction: { fontSize: 72, scale: [0.85,0.85], xy: [15, -10] },
                 batmanLego: { fontSize: 40, scale: [1,1.4], xy: [15, 5] },
                 dragonsRR: { fontSize: 80, scale: [1.7,1], xy: [15, 5] },
+                floorIsLava: { fontSize: 72, scale: [0.85,0.85], xy: [15, -10] },
                 starWarsLego: { fontSize: 100, scale: [0.9,1], xy: [15, -20] },
                 toyStory: { fontSize: 72, scale: [0.9,0.85], xy: [15, -10] }
             }
@@ -1360,7 +1294,7 @@ var vars = {
                 div=3;
             } else if (cV.options.length%5===0) { // 5, a special case of a 2 followed by a 3
                 if (vars.DEBUG===true) { console.log('5\'s'); }
-                gameTypes.push([2,3]);
+                gameTypes.push(2,3);
                 div=5;
             } else if (cV.options.length%2===0) {
                 if (vars.DEBUG===true) { console.log('2\'s'); }
@@ -1368,7 +1302,7 @@ var vars = {
                 div=2;
             } else if (cV.options.length%7===0) { // 7, another special case of 2,3,2
                 if (vars.DEBUG===true) { console.log('7\'s'); }
-                gameTypes.push([2,3,2]);
+                gameTypes.push(2,3,2);
                 div=7;
             }
 
@@ -1396,7 +1330,7 @@ var vars = {
         },
 
         showUpgrades: function(_upgradeFor) {
-            if (_upgradeFor!=='batmanLego' && _upgradeFor!=='starWarsLego' && _upgradeFor!=='dragonsRR' && _upgradeFor!=='toyStory') {
+            if (_upgradeFor!=='batmanLego' && _upgradeFor!=='starWarsLego' && _upgradeFor!=='dragonsRR' && _upgradeFor!=='toyStory' && _upgradeFor!=='floorIsLava') {
                 console.error(_upgradeFor + ' is invalid!');
                 return false;
             }

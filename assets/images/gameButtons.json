@@ -5,5 +5,6 @@
 "starWarsButton":{"frame":{"x":246,"y":1,"w":292,"h":139},"rotated":false,"trimmed":false,"spriteSourceSize":{"x":0,"y":0,"w":292,"h":139},"sourceSize":{"w":292,"h":139}},
 "dragonsButton":{"frame":{"x":542,"y":4,"w":241,"h":135},"rotated":false,"trimmed":false,"spriteSourceSize":{"x":0,"y":0,"w":241,"h":135},"sourceSize":{"w":241,"h":135}},
 "subtractionButton":{"frame":{"x":983,"y":20,"w":215,"h":102},"rotated":false,"trimmed":false,"spriteSourceSize":{"x":0,"y":0,"w":215,"h":102},"sourceSize":{"w":215,"h":102}},
-"additionButton":{"frame":{"x":1199,"y":20,"w":221,"h":102},"rotated":false,"trimmed":false,"spriteSourceSize":{"x":0,"y":0,"w":221,"h":102},"sourceSize":{"w":221,"h":102}}
-},"meta":{"app":"http://www.codeandweb.com/texturepacker","version":"1.0","image":"gameButtons.png","format":"RGBA8888","size":{"w":1420,"h":146},"scale":"1"}}
+"additionButton":{"frame":{"x":1199,"y":20,"w":221,"h":102},"rotated":false,"trimmed":false,"spriteSourceSize":{"x":0,"y":0,"w":221,"h":102},"sourceSize":{"w":221,"h":102}},
+"floorIsLavaButton":{"frame":{"x":1423,"y":1,"w":198,"h":143},"rotated":false,"trimmed":false,"spriteSourceSize":{"x":0,"y":0,"w":198,"h":143},"sourceSize":{"w":198,"h":143}}
+},"meta":{"app":"http://www.codeandweb.com/texturepacker","version":"1.0","image":"gameButtons.png","format":"RGBA8888","size":{"w":1622,"h":145},"scale":"1"}}

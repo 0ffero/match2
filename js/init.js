@@ -60,15 +60,15 @@ function preload() {
     scene.load.image('spark1', 'particles/red.png');
 
     // UI
-    scene.load.image('background', 'images/backgroundWhite.jpg');
-    scene.load.image('bgColour', 'images/bgColourDefault.png');
-    scene.load.atlas('gameButtons', 'images/gameButtons.png', 'images/gameButtons.json');
-    scene.load.atlas('fullScreenButton', 'images/fullScreen.png', 'images/fullScreen.json');
-    scene.load.image('optionsButton', 'images/options.png');
-    scene.load.image('restartButton', 'images/reload.png');
-    scene.load.image('whitePixel', 'images/whitePixel.png');
-    scene.load.atlas('coinG', 'images/coins.png', 'images/coins.json');
-    scene.load.atlas('coinS', 'images/coinsS.png', 'images/coinsS.json');
+    scene.load.image('background',       'images/backgroundWhite.jpg');
+    scene.load.image('bgColour',         'images/bgColourDefault.png');
+    scene.load.atlas('gameButtons',      'images/gameButtons.png',  'images/gameButtons.json');
+    scene.load.atlas('fullScreenButton', 'images/fullScreen.png',   'images/fullScreen.json');
+    scene.load.image('optionsButton',    'images/options.png');
+    scene.load.image('restartButton',    'images/reload.png');
+    scene.load.image('whitePixel',       'images/whitePixel.png');
+    scene.load.atlas('coinG',            'images/coins.png',        'images/coins.json');
+    scene.load.atlas('coinS',            'images/coinsS.png',       'images/coinsS.json');
 
     scene.load.html('nameform', 'html/nameForm.html');
 
@@ -94,12 +94,12 @@ function create() {
     if (lS.match2_selectedGame==='addition' || lS.match2_selectedGame==='subtraction') { numbersGame = true; }
 
     scene.groups = {};
-    scene.groups.cardsGroup = scene.add.group();
+    scene.groups.cardsGroup     = scene.add.group();
     scene.groups.cardBacksGroup = scene.add.group();
-    scene.groups.foundGroup = scene.add.group(); // unused
-    scene.groups.bgOptions = scene.add.group();
-    scene.groups.coins = scene.add.group();
-    scene.groups.upgrades = scene.add.group();
+    scene.groups.foundGroup     = scene.add.group(); // unused
+    scene.groups.bgOptions      = scene.add.group();
+    scene.groups.coins          = scene.add.group();
+    scene.groups.upgrades       = scene.add.group();
 
     scene.groups.additionBlackBGs = scene.add.group();
 

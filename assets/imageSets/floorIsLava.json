@@ -1,0 +1,435 @@
+{
+	"frames": [
+		{
+			"filename": "card0",
+			"frame": {
+				"x": 1,
+				"y": 1,
+				"w": 200,
+				"h": 260
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 200,
+				"h": 260
+			},
+			"sourceSize": {
+				"w": 200,
+				"h": 260
+			}
+		},
+		{
+			"filename": "card1",
+			"frame": {
+				"x": 203,
+				"y": 1,
+				"w": 200,
+				"h": 260
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 200,
+				"h": 260
+			},
+			"sourceSize": {
+				"w": 200,
+				"h": 260
+			}
+		},
+		{
+			"filename": "card2",
+			"frame": {
+				"x": 405,
+				"y": 1,
+				"w": 200,
+				"h": 260
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 200,
+				"h": 260
+			},
+			"sourceSize": {
+				"w": 200,
+				"h": 260
+			}
+		},
+		{
+			"filename": "card3",
+			"frame": {
+				"x": 607,
+				"y": 1,
+				"w": 200,
+				"h": 260
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 200,
+				"h": 260
+			},
+			"sourceSize": {
+				"w": 200,
+				"h": 260
+			}
+		},
+		{
+			"filename": "card4",
+			"frame": {
+				"x": 809,
+				"y": 1,
+				"w": 200,
+				"h": 260
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 200,
+				"h": 260
+			},
+			"sourceSize": {
+				"w": 200,
+				"h": 260
+			}
+		},
+		{
+			"filename": "card5",
+			"frame": {
+				"x": 1,
+				"y": 263,
+				"w": 200,
+				"h": 260
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 200,
+				"h": 260
+			},
+			"sourceSize": {
+				"w": 200,
+				"h": 260
+			}
+		},
+		{
+			"filename": "card6",
+			"frame": {
+				"x": 203,
+				"y": 263,
+				"w": 200,
+				"h": 260
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 200,
+				"h": 260
+			},
+			"sourceSize": {
+				"w": 200,
+				"h": 260
+			}
+		},
+		{
+			"filename": "card7",
+			"frame": {
+				"x": 405,
+				"y": 263,
+				"w": 200,
+				"h": 260
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 200,
+				"h": 260
+			},
+			"sourceSize": {
+				"w": 200,
+				"h": 260
+			}
+		},
+		{
+			"filename": "card8",
+			"frame": {
+				"x": 607,
+				"y": 263,
+				"w": 200,
+				"h": 260
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 200,
+				"h": 260
+			},
+			"sourceSize": {
+				"w": 200,
+				"h": 260
+			}
+		},
+		{
+			"filename": "card9",
+			"frame": {
+				"x": 809,
+				"y": 263,
+				"w": 200,
+				"h": 260
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 200,
+				"h": 260
+			},
+			"sourceSize": {
+				"w": 200,
+				"h": 260
+			}
+		},
+		{
+			"filename": "cardA",
+			"frame": {
+				"x": 1,
+				"y": 525,
+				"w": 200,
+				"h": 260
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 200,
+				"h": 260
+			},
+			"sourceSize": {
+				"w": 200,
+				"h": 260
+			}
+		},
+		{
+			"filename": "cardB",
+			"frame": {
+				"x": 203,
+				"y": 525,
+				"w": 200,
+				"h": 260
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 200,
+				"h": 260
+			},
+			"sourceSize": {
+				"w": 200,
+				"h": 260
+			}
+		},
+		{
+			"filename": "cardC",
+			"frame": {
+				"x": 405,
+				"y": 525,
+				"w": 200,
+				"h": 260
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 200,
+				"h": 260
+			},
+			"sourceSize": {
+				"w": 200,
+				"h": 260
+			}
+		},
+		{
+			"filename": "cardD",
+			"frame": {
+				"x": 607,
+				"y": 525,
+				"w": 200,
+				"h": 260
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 200,
+				"h": 260
+			},
+			"sourceSize": {
+				"w": 200,
+				"h": 260
+			}
+		},
+		{
+			"filename": "cardE",
+			"frame": {
+				"x": 809,
+				"y": 525,
+				"w": 200,
+				"h": 260
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 200,
+				"h": 260
+			},
+			"sourceSize": {
+				"w": 200,
+				"h": 260
+			}
+		},
+		{
+			"filename": "cardF",
+			"frame": {
+				"x": 1011,
+				"y": 1,
+				"w": 200,
+				"h": 260
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 200,
+				"h": 260
+			},
+			"sourceSize": {
+				"w": 200,
+				"h": 260
+			}
+		},
+		{
+			"filename": "cardG",
+			"frame": {
+				"x": 1011,
+				"y": 263,
+				"w": 200,
+				"h": 260
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 200,
+				"h": 260
+			},
+			"sourceSize": {
+				"w": 200,
+				"h": 260
+			}
+		},
+		{
+			"filename": "cardH",
+			"frame": {
+				"x": 1011,
+				"y": 525,
+				"w": 200,
+				"h": 260
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 200,
+				"h": 260
+			},
+			"sourceSize": {
+				"w": 200,
+				"h": 260
+			}
+		},
+		{
+			"filename": "cardI",
+			"frame": {
+				"x": 1,
+				"y": 787,
+				"w": 200,
+				"h": 260
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 200,
+				"h": 260
+			},
+			"sourceSize": {
+				"w": 200,
+				"h": 260
+			}
+		},
+		{
+			"filename": "cardJ",
+			"frame": {
+				"x": 203,
+				"y": 787,
+				"w": 200,
+				"h": 260
+			},
+			"rotated": false,
+			"trimmed": false,
+			"spriteSourceSize": {
+				"x": 0,
+				"y": 0,
+				"w": 200,
+				"h": 260
+			},
+			"sourceSize": {
+				"w": 200,
+				"h": 260
+			}
+		}
+	],
+	"meta": {
+		"app": "http://www.codeandweb.com/texturepacker",
+		"version": "1.0",
+		"image": "floorIsLava.png",
+		"format": "RGBA8888",
+		"size": {
+			"w": 1212,
+			"h": 1048
+		},
+		"scale": "1"
+	}
+}
