@@ -87,7 +87,36 @@ vars.files = {
             ['coinAdd', 'audio/coin.ogg'],
             ['unlock', 'audio/unlock.ogg'],
             ['cardTurn', 'audio/cardTurn.m4a']
-        ]
+        ],
+        YesNoAvailable: ['batman', 'dragons', 'lava', 'ghostbusters', 'starWars', 'toyStory'],
+        YesNoList: { batman: [5,7], dragons: [8,17], lava: [15,11], ghostbusters: [0,0], starWars: [7,9], toyStory: [12,13] }, // order = yes/no
+        YesNoRandomSet: { yes: [], no: [] },
+
+        generateRandomSet: function() {
+            // this creates a set of 10 yes and no sounds from all available card sets
+            // its generated once per refresh of the page to limit the amount of downloaded files.
+            if (this.YesNoRandomSet.yes.length===0 && this.YesNoRandomSet.no.length===0) {
+                console.log('Generating random audio set for games without their own Yes No files.');
+                let ynl = this.YesNoList;
+                let yna = this.YesNoAvailable;
+                let badList = []; let goodList = [];
+                for (option of yna) {
+                    let yn = ynl[option];
+                    if (yn[0]>0) {
+                        goodList.push(Phaser.Utils.Array.NumberArray(1,yn[0],`${option}Yes`));
+                    }
+                    if (yn[1]>0) {
+                        badList.push(Phaser.Utils.Array.NumberArray(1,yn[1],`${option}No`));
+                    }
+                }
+                let yesBulk = shuffle(goodList.flat());
+                let noBulk = shuffle(badList.flat());
+                this.YesNoRandomSet.yes = yesBulk.splice(0,10);
+                this.YesNoRandomSet.no = noBulk.splice(0,10);
+            } else {
+                console.warn('The List has already been generated... Ignoring the call');
+            }
+        }
     },
 
     backgrounds: {
@@ -119,10 +148,31 @@ vars.files = {
         cards: null, // addition and subtraction dont have "backs" as cards are always face forward
         font: ['numbersFont', 'fonts/numbersFont.png', 'fonts/numbersFont.xml'],
         sounds: {
-            good: ['batmanYes1.ogg','batmanYes2.ogg','batmanYes3.ogg','batmanYes4.ogg','batmanYes5.ogg'],
-            bad:  ['batmanNo1.ogg','batmanNo2.ogg','batmanNo3.ogg','batmanNo4.ogg','batmanNo5.ogg','batmanNo6.ogg','batmanNo7.ogg'],
-            win:  'batmanWin.ogg'
+            good: [],
+            bad:  [],
+            win:  'batmanWin.ogg',
+
+            init: function() {
+                vars.files.additionSubtractionInit('addition');
+            }
         },
+    },
+
+    additionSubtractionInit: function(_type) { // type is substraction or addition
+        if (_type==='subtraction' || _type==='addition') {
+            let fV = vars.files;
+            let aFV = fV.audio;
+            aFV.generateRandomSet();
+            // move the random set into the list of available yes/no's
+            let aV = vars.audio;
+            aV.no  = aFV.YesNoRandomSet.no;
+            aV.yes = aFV.YesNoRandomSet.yes;
+            // push them to the good/bad array for posterity
+            aV.yes.forEach( (aName)=> { fV[_type].sounds.good.push(`${aName}.ogg`); })
+            aV.no.forEach( (aName)=> { fV[_type].sounds.bad.push(`${aName}.ogg`); })
+        } else {
+            console.error(`Error: Invalid type (should be subtraction or addition, was "${_type}"`)
+        }
     },
 
     subtraction: {
@@ -133,9 +183,13 @@ vars.files = {
         cards: null, // addition and subtraction dont have "backs" as cards are always face forward
         font: ['numbersFont', 'fonts/numbersFont.png', 'fonts/numbersFont.xml'],
         sounds: {
-            good: ['batmanYes1.ogg','batmanYes2.ogg','batmanYes3.ogg','batmanYes4.ogg','batmanYes5.ogg'],
-            bad:  ['batmanNo1.ogg','batmanNo2.ogg','batmanNo3.ogg','batmanNo4.ogg','batmanNo5.ogg','batmanNo6.ogg','batmanNo7.ogg'],
-            win:  'batmanWin.ogg'
+            good: [],
+            bad:  [],
+            win:  'batmanWin.ogg',
+
+            init: function() {
+                vars.files.additionSubtractionInit('subtraction');
+            }
         },
     },
 
@@ -215,6 +269,34 @@ vars.files = {
         }
     },
 
+    ghostbusters: {
+        cardType: 'atlas',
+        editionText: 'Ghostbusters Edition',
+        paragraph: '\n',
+        welcomeData: [100, 920, 72, 1, 1, 0.95],
+        images: [
+            ['cardBack','images/ghostbustersCardBack.png'],
+            ['cardBackAlt','images/ghostbustersCardBackSilver.png'],
+        ],
+        cards: {
+            atlas: ['ghostbusters','imageSets/ghostbusters.png','imageSets/ghostbusters.json']
+        },
+        font: ['ghostbustersFont', 'fonts/ghostbustersFont.png', 'fonts/ghostbustersFont.xml'],
+        sounds: {
+            good: [],
+            bad:  [],
+            win:  'ghostbustersWin.ogg',
+            init: function() { // this will be replaced with a random yes/no set from all available card sets
+                this.bad = Phaser.Utils.Array.NumberArray(1,24,'ghostbustersNo','.ogg');
+                this.good = Phaser.Utils.Array.NumberArray(1,16,'ghostbustersYes','.ogg');
+            }
+        },
+
+        init: function() {
+            this.sounds.init();
+        }
+    },
+
     starWarsLego: {
         cardType: 'atlas',
         editionText: 'Lego Star Wars Edition',
@@ -271,15 +353,18 @@ vars.files = {
     
     loadAssets: function() {
         let files;
-        switch (vars.imageSets.current) {
-            case 'batmanLego':   files = vars.files.batman;                     multiLoader(files); break;
-            case 'dragonsRR':    files = vars.files.dragons;      files.init(); multiLoader(files); break;
-            case 'floorIsLava':  files = vars.files.floorIsLava;  files.init(); multiLoader(files); break;
-            case 'starWarsLego': files = vars.files.starWarsLego;               multiLoader(files); break;
-            case 'toyStory':     files = vars.files.toyStory;     files.init(); multiLoader(files); break;
+        let fV = vars.files;
+        let cIV = vars.imageSets.current;
+        switch (cIV) { // I could reduce this by doing fV[cIV] for the card set, but this makes it more obvious what its doing
+            case 'batmanLego':   files = fV.batman;                     multiLoader(files); break;
+            case 'dragonsRR':    files = fV.dragons;      files.init(); multiLoader(files); break;
+            case 'floorIsLava':  files = fV.floorIsLava;  files.init(); multiLoader(files); break;
+            case 'ghostbusters': files = fV.ghostbusters; files.init(); multiLoader(files); break;
+            case 'starWarsLego': files = fV.starWarsLego;               multiLoader(files); break;
+            case 'toyStory':     files = fV.toyStory;     files.init(); multiLoader(files); break;
 
-            case 'addition':     multiLoaderNumbers('addition'); break;
-            case 'subtraction':  multiLoaderNumbers('subtraction'); break;
+            case 'addition':     fV.addition.sounds.init();    multiLoaderNumbers('addition');    break;
+            case 'subtraction':  fV.subtraction.sounds.init(); multiLoaderNumbers('subtraction'); break;
         }
     }
 },
@@ -304,8 +389,8 @@ vars.groups = {
 }
 
 vars.imageSets = {
-    available: ['batmanLego','starWarsLego', 'dragonsRR', 'toyStory','addition','subtraction','floorIsLava'],
-    fileName: ['batman','starWarsLego','dragons','toyStory','addition','subtraction','floorIsLava'],
+    available: ['batmanLego','starWarsLego', 'dragonsRR', 'toyStory','addition','subtraction','floorIsLava','ghostbusters'],
+    fileName: ['batman','starWarsLego','dragons','toyStory','addition','subtraction','floorIsLava','ghostbusters'],
     current: 'dragonsRR',
     currentFName: -1,
 
@@ -487,7 +572,12 @@ vars.localStorage = {
 
     saveUnlockedCard: function(_cardName, _cardID) {
         let lS = window.localStorage;
-        lS.match2_unlocks+=_cardName + ',' + _cardID + ';';
+        let newCardData = _cardName + ',' + _cardID + ';';
+        if (!lS.match2_unlocks.includes(newCardData)) {
+            lS.match2_unlocks+=newCardData;
+        } else {
+            console.error('This card has already been unlocked!\nIgnoring request');
+        }
     },
 
     updateBGColour: function() {

@@ -74,6 +74,7 @@ function multiLoaderSounds(_sounds) {
     let aV = vars.audio;
     aV.no=[]; aV.yes=[]; aV.noUsed=[]; aV.yesUsed=[]; aV.win=null;
     let sV = vars.files.destroy.sounds;
+    console.groupCollapsed('Loading audio files...');
     for (good of _sounds.good) {
         let name = good.replace('.ogg','');
         scene.load.audio(name, 'audio/' + good);
@@ -90,6 +91,7 @@ function multiLoaderSounds(_sounds) {
         aV.no.push(name);
         sV.push(name);
     }
+    console.groupEnd();
 
     // Load "win" sound
     let win = _sounds.win;

@@ -57,6 +57,10 @@ const consts = {
         pairWorth: 10
     },
 
+    console: {
+        functionInit: 'font-size: 16px; color: green;',
+    },
+
     depths: {
         snow: 100,
         options: 30,

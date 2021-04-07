@@ -274,8 +274,9 @@ var vars = {
             ['cmd_batmanLego','batmanButton'],
             ['cmd_starWarsLego','starWarsButton'],
             ['cmd_dragonsRR', 'dragonsButton'],
-            ['cmd_toyStory', 'toyStoryButton'],
             ['cmd_floorIsLava', 'floorIsLavaButton'],
+            ['cmd_ghostbusters', 'ghostbustersButton'],
+            ['cmd_toyStory', 'toyStoryButton'],
             ['cmd_addition', 'additionButton'],
             ['cmd_subtraction', 'subtractionButton']
         ],
@@ -484,7 +485,11 @@ var vars = {
             let cDeck = vars.imageSets.currentFName;
             for (let c of cV.unlocked) {
                 if (c[0].includes(cDeck)) {
-                    avail.push(parseInt(c[1]));
+                    if (!Number.isInteger(c[1]) && c[1].includes('~')) {
+                        avail.push(c[1]);
+                    } else {
+                        avail.push(parseInt(c[1]));
+                    }
                 }
             }
             return shuffle(avail).slice(0,9);
@@ -527,7 +532,14 @@ var vars = {
             if (vars.input.enabled===false) { return false; }
             if (vars.DEBUG===true) { console.log('Showing This card'); }
             let cardName = _card.name; // this is the back of the card
-            cardName = cardName.match(/\w+_([0-9]{1,2})_([ab])/);
+            if (cardName.includes('~')) { 
+                // this next piece of code limits the amount of possible cards to 10 (0-9) + 26 (A-Z) + 89 (10-99) = 125 cards max.
+                // If needed (fukn doubt it) I can do {2,3} (1025 cards) or {2,4} (10025 cards) etc
+                // (by that point the amount of px wide and high would be > 4000 which cant be used on some phones/tablets)
+                cardName = cardName.match(/\w+_(~[0-9]{2})_([ab])/);
+            } else {
+                cardName = cardName.match(/\w+_([0-9]{1,2})_([ab])/);
+            }
 
             // check that this isnt the same card as the first (ie accidental double click)
             if (_card.getData('clicked')===undefined) { _card.setData('clicked', true); } else { return false; }
@@ -716,8 +728,10 @@ var vars = {
                 index = cardDeck.splice(0,1)[0];
                 // convert index to letter
                 let cardLetter=-1
-                if (index>=9) {
+                if (Number.isInteger(index) && index>=9) {
                     if (index===9) { cardLetter = '9'; } else { cardLetter = String.fromCharCode((index-10)+65); }
+                } else if (!Number.isInteger(index) && index.includes('~')) {
+                    cardLetter = index.replace('~','');
                 } else {
                     cardLetter = index.toString();
                 }
@@ -901,8 +915,11 @@ var vars = {
                 wellDone = scene.add.bitmapText(110, 450, 'dragonFont', 'Well Done!\nYou completed it in\n' + _gV.moves + ' moves!', 142, 1).setAlpha(0).setName('wellDone').setScale(1.25,1);
                 playAgain = scene.add.bitmapText(250, 550, 'dragonFont', 'Play Again?', 142, 1).setAlpha(0).setName('playAgain').setTint(0xffff00).setInteractive().setScale(1.73,1);
             } else if (iC==='floorIsLava') {
-                wellDone = scene.add.bitmapText(110, 450, 'numbersFont', 'Well Done!\nYou got them all right!', 76, 1).setAlpha(0).setName('wellDone').setScale(1.25,1);
+                wellDone = scene.add.bitmapText(110, 450, 'numbersFont', 'Well Done!\nYou completed it in\n' + _gV.moves + ' moves!', 88, 1).setAlpha(0).setName('wellDone').setScale(1.25,1);
                 playAgain = scene.add.bitmapText(250, 550, 'numbersFont', 'Play Again?', 76, 1).setAlpha(0).setName('playAgain').setInteractive().setScale(1.73,1);
+            } else if (iC==='ghostbusters') {
+                wellDone = scene.add.bitmapText(165, 450, 'ghostbustersFont', 'Well Done!\n\nYou completed it in\n\n' + _gV.moves + ' moves!', 72, 1).setAlpha(0).setName('wellDone').setScale(1.25,1);
+                playAgain = scene.add.bitmapText(250, 550, 'ghostbustersFont', 'Play Again?', 76, 1).setAlpha(0).setName('playAgain').setInteractive().setScale(1.73,1);
             } else if (iC==='toyStory') {
                 wellDone = scene.add.bitmapText(110, 450, 'toyStoryFont', 'Well Done!\nYou completed it in\n' + _gV.moves + ' moves!', 82, 1).setAlpha(0).setName('wellDone').setScale(1.25,1);
                 playAgain = scene.add.bitmapText(250, 550, 'toyStoryFont', 'Play Again?', 76, 1).setAlpha(0).setName('playAgain').setInteractive().setScale(1.73,1);
@@ -1008,7 +1025,7 @@ var vars = {
                     vars.UI.showOptions();
                 } else if (card.name.includes('bgC_')===true) { 
                     vars.UI.changeBackground(card.name.replace('bgC_','').split('_'));
-                } else if (card.name==='cmd_floorIsLava' || card.name==='cmd_batmanLego' || card.name==='cmd_starWarsLego' || card.name==='cmd_dragonsRR' || card.name==='cmd_toyStory' || card.name==='cmd_addition' || card.name==='cmd_subtraction') {
+                } else if (card.name==='cmd_floorIsLava' || card.name==='cmd_ghostbusters' || card.name==='cmd_batmanLego' || card.name==='cmd_starWarsLego' || card.name==='cmd_dragonsRR' || card.name==='cmd_toyStory' || card.name==='cmd_addition' || card.name==='cmd_subtraction') {
                     let reset = vars.localStorage.updateCardSet(card.name.replace('cmd_',''));
                     if (reset===false) { vars.UI.optionsHide(); }
                 } else if (card.name.includes('dif_')) {
@@ -1128,6 +1145,7 @@ var vars = {
                 batmanLego: { fontSize: 40, scale: [1,1.4], xy: [15, 5] },
                 dragonsRR: { fontSize: 80, scale: [1.7,1], xy: [15, 5] },
                 floorIsLava: { fontSize: 72, scale: [0.85,0.85], xy: [15, -10] },
+                ghostbusters: { fontSize: 69, scale: [0.85,0.85], xy: [15, 10] },
                 starWarsLego: { fontSize: 100, scale: [0.9,1], xy: [15, -20] },
                 toyStory: { fontSize: 72, scale: [0.9,0.85], xy: [15, -10] }
             }
@@ -1192,6 +1210,12 @@ var vars = {
 
         destroyUnlockedCard: function(_tween, _card) {
             _card[0].destroy();
+            // clear the unlocked var and repopulate
+            vars.cards.unlockedStr='';
+            vars.cards.unlockedToStr();
+            // update the UI
+            vars.UI.hideUpgrades();
+            vars.UI.showUpgrades('ghostbusters');
             vars.game.checkPlayerCoins();
         },
 
@@ -1330,7 +1354,7 @@ var vars = {
         },
 
         showUpgrades: function(_upgradeFor) {
-            if (_upgradeFor!=='batmanLego' && _upgradeFor!=='starWarsLego' && _upgradeFor!=='dragonsRR' && _upgradeFor!=='toyStory' && _upgradeFor!=='floorIsLava') {
+            if (_upgradeFor!=='batmanLego' && _upgradeFor!=='starWarsLego' && _upgradeFor!=='dragonsRR' && _upgradeFor!=='toyStory' && _upgradeFor!=='floorIsLava' && _upgradeFor!=='ghostbusters') {
                 console.error(_upgradeFor + ' is invalid!');
                 return false;
             }
@@ -1355,11 +1379,25 @@ var vars = {
             let unlockedStr = vars.cards.unlockedStr;
             
             let unlockables = [_upgradeFor + '_9']; let unlockablesIDs = [9];
+            // limiter in place to only allow images from A-Z
+            let over = 0;
+            if (total>26) { over=total-26; total-=over; }
             for (let cID=65; cID<65+total; cID++) {
                 let cName = _upgradeFor + '_' + String.fromCharCode(cID)
                 // check if this card is already unlocked
                 if (!unlockedStr.includes(cName)) {
                     unlockables.push(cName); unlockablesIDs.push((cID-65)+10);
+                }
+            }
+
+            if (over!==0) { // so, when implementing ghostbusters, I went overboard with the card images. So cards 0-9 + A-Z isnt enough "slots" any more. So, Im simply creating new index's from 10+
+                for (let o=0; o<over; o++) {
+                    let cID = 10+o;
+                    let cName = _upgradeFor + '_' + cID;
+                    if (!unlockedStr.includes(cName)) {
+                        cID = '~' + cID;
+                        unlockables.push(cName); unlockablesIDs.push(cID);
+                    }
                 }
             }
 
@@ -1382,7 +1420,6 @@ var vars = {
                         }
                     }
                 }
-
             }
         },
 
