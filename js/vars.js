@@ -1,7 +1,20 @@
 var vars = {
     DEBUG: true,
 
-    version: 2.43,
+    version: 2.44,
+    getVersion: ()=> {
+        a = scene.add.bitmapText(vars.canvas.width-10, 60, 'default', `Version: ${vars.version}`, 48).setOrigin(1).setAlpha(0).setDepth(100);
+        scene.tweens.add({
+            targets: a,
+            alpha: 1,
+            duration: 500,
+            yoyo: true,
+            hold: 3000,
+            onComplete: (_tween, _object)=> {
+                _object[0].destroy();
+            }
+        })
+    },
 
     animate: {
         init: function() {
@@ -1027,6 +1040,12 @@ var vars = {
         },
 
         init: function() {
+            scene.input.keyboard.createCombo('version', { resetOnMatch: true });
+            scene.input.keyboard.on('keycombomatch', function (event) {
+                vars.getVersion();
+            });
+
+            // clickables
             scene.input.on('gameobjectdown', function (pointer, card) {
                 let gV = vars.game;
                 let cV = vars.cards;
