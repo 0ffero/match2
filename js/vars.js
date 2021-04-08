@@ -1,7 +1,7 @@
 var vars = {
     DEBUG: true,
 
-    version: 2.4,
+    version: 2.43,
 
     animate: {
         init: function() {
@@ -677,19 +677,21 @@ var vars = {
                 // In future ill have to take this kind of thing into consideration so a reset isnt needed! IMPORTANT
                 scene.scene.restart();
                 return false;
+            } else {
+                let bgs = vars.files.backgrounds.list[0];
+                let bgName = Phaser.Math.RND.pick(bgs);
+                let randomID = generateRandomID();
+                let imageWidth = 1280; // to generalise we need the backgrounds width POSSIBLE TODO
+                let name = 'backgroundImage_' + randomID;
+                scene.load.image(name,'images/backgrounds/' + bgName);
+                vars.game.currentBackground = bgName;
+                scene.load.start();
+                scene.load.on('filecomplete-image-backgroundImage_' + randomID, function (key, type, data) {
+                    if (scene.children.getByName('numbersBG')!==null) { scene.children.getByName('numbersBG').destroy(); }
+                    scene.add.image((xWidth/2)+10, vars.canvas.cY-60, name).setScale(xWidth/imageWidth).setDepth(consts.depths.additionBG).setName('numbersBG');
+                });
+                return true;
             }
-            let bgs = vars.files.backgrounds.list[0];
-            let bgName = Phaser.Math.RND.pick(bgs);
-            let randomID = generateRandomID();
-            let imageWidth = 1280; // to generalise we need the backgrounds width POSSIBLE TODO
-            let name = 'backgroundImage_' + randomID;
-            scene.load.image(name,'images/backgrounds/' + bgName);
-            vars.game.currentBackground = bgName;
-            scene.load.start();
-            scene.load.on('filecomplete-image-backgroundImage_' + randomID, function (key, type, data) {
-                if (scene.children.getByName('numbersBG')!==null) { scene.children.getByName('numbersBG').destroy(); }
-                scene.add.image((xWidth/2)+10, vars.canvas.cY-60, name).setScale(xWidth/imageWidth).setDepth(consts.depths.additionBG).setName('numbersBG');
-            });
         },
 
         checkPlayerCoins: function() {
@@ -793,7 +795,9 @@ var vars = {
             if (cardDeck===undefined) { console.error('The card deck is empty!'); return false; }
 
             // first create a background if one doesnt exist
-            vars.game.bgInitNumbers();
+            if (vars.game.bgInitNumbers()===false) {
+                throw new Error("Waiting for game to restart.");
+            }
 
             // initialise variables
             gV.moves=0;
