@@ -30,9 +30,28 @@ function multiLoader(files) {
 
 function multiLoaderFonts(files) {
     let font = files.font;
-    scene.load.bitmapFont(font[0] , font[1], font[2]);
-    scene.load.bitmapFont('default', 'fonts/default.png', 'fonts/default.xml');
-    scene.load.bitmapFont('xmasFont', 'fonts/xmasFont.png', 'fonts/xmasFont.xml');
+    let skip = false;
+    if (scene.sys.cache.bitmapFont.get(font[0])===undefined) {
+        // in general each card set has its own font so loading them all would be wasteful.
+        // however addition etc all use the same font. if its passed in here the bottom check
+        // will be ignored. 
+        // As fonts dont become available until theyre loaded, we specifically set the skip var.
+        // Meaning that if a numbers game is initially selected it will fire here. If its, say,
+        // ghostbusters, it still loads in the numbers font below.
+        scene.load.bitmapFont(font[0] , font[1], font[2]);
+        if (font[0]==='numbersFont') { skip=true; }
+    }
+    if (scene.sys.cache.bitmapFont.get('default')===undefined) {
+        scene.load.bitmapFont('default', 'fonts/default.png', 'fonts/default.xml');
+    }
+    if (scene.sys.cache.bitmapFont.get('xmasFont')===undefined) {
+        scene.load.bitmapFont('xmasFont', 'fonts/xmasFont.png', 'fonts/xmasFont.xml');
+    }
+    if (scene.sys.cache.bitmapFont.get('numbersFont')===undefined && skip===false) {
+        // we currently have 2 numbers games which use this font, but it will eventually
+        // be 4 so we cache it now so jumping from game to game is a little faster
+        scene.load.bitmapFont('numbersFont', 'fonts/numbersFont.png', 'fonts/numbersFont.xml');
+    }
 }
 
 function multiLoaderNumbers(mathType=null) {

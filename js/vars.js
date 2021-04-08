@@ -1,7 +1,7 @@
 var vars = {
     DEBUG: true,
 
-    version: 2.0,
+    version: 2.4,
 
     animate: {
         init: function() {
@@ -666,6 +666,18 @@ var vars = {
 
         bgInitNumbers: function() {
             let xWidth = 1200;
+            if (vars.files.backgrounds.list.length===0) {
+                // if the addition/subtraction hasnt been initialised:
+                // I was originally going to load the files needed.
+                // But then Id also have to do checks for certain files
+                // based on game type (addition or subtraction).
+                // This was easier and works cause I crushed all the files and hence loads fast.
+                // To see how sloppy this is, check the WARNINGS in the console... (to recreate for future bug fix: swap from addition/sub to any film card set)
+
+                // In future ill have to take this kind of thing into consideration so a reset isnt needed! IMPORTANT
+                scene.scene.restart();
+                return false;
+            }
             let bgs = vars.files.backgrounds.list[0];
             let bgName = Phaser.Math.RND.pick(bgs);
             let randomID = generateRandomID();
@@ -978,6 +990,10 @@ var vars = {
             // START THE GAME
             let gameType = vars.imageSets.current;
             if (gameType==='addition' || gameType==='subtraction') {
+                // if the game type is now one of these two we have to check that everything is initialised properly
+                // for example: if we start with ghostbusters then switch to subtraction it will cause an error because
+                // most of it hasnt been initialised (as everythings set up for film card sets atm).
+                // So, we do a couple of checks
                 vars.cards.createAdditionPairs();
             } else {
                 vars.game.drawCards();
