@@ -270,6 +270,89 @@ vars.files = {
     },
 
     ghostbusters: {
+        ages: {
+            age12: {  // this defines which files are overwritten when enabled
+                sounds:  ['win'],
+
+                loadOthers: ()=> {
+                    scene.load.atlas('stayPuft', 'images/12+/stayPuftJoined.png', 'images/12+/stayPuftJoined.json');
+                    scene.load.audio('stayPuftStep', 'audio/stayPuftStep.ogg');
+                    vars.animate.animsAvailableForCardSet.push(vars.files.ghostbusters.ages.age12.animateStayPuft);
+                },
+
+                animateStayPuft: ()=> {
+                    let animatedStayPuft = scene.add.image(vars.canvas.cX, vars.canvas.height+100, 'stayPuft').setOrigin(0.5,1).setScale(0.1);
+                    scene.tweens.add({
+                        targets: animatedStayPuft,
+                        scale: 2.5,
+                        duration: 8000
+                    })
+                    scene.tweens.add({
+                        targets: animatedStayPuft,
+                        duration: 500,
+                        repeat: 6,
+                        alpha: 0,
+                        yoyo: true,
+                        onYoyo: function (_tween, _object) {
+                            _object.frame.name==='frame1' ? _object.setFrame('frame2') : _object.setFrame('frame1');
+                            scene.sound.play('stayPuftStep');
+                        },
+                        onComplete: (_t, _o)=> {
+                            scene.tweens.add({
+                                targets: _o[0],
+                                alpha: 0,
+                                duration: 250
+                            })
+                        }
+                    })
+                }
+            },
+            age15: {
+                images: ['cardBack'],
+
+                loadOthers: ()=> {
+                    scene.load.atlas('slimer', 'images/15+/slimerSheet.png', 'images/15+/slimerSheet.json');
+                    scene.load.audio('slimer', 'audio/slimer.ogg');
+                    scene.load.on('filecomplete-json-slimer', function (key,type,data) {
+                        vars.files.ghostbusters.ages.age15.initSlimer();
+                    })
+                },
+
+                initSlimer: ()=> {
+                    console.log('Initialising Slimer Animation');
+                    let body = scene.add.image(vars.canvas.cX, vars.canvas.cY, 'slimer','slimerBody');
+                    let leftArm = scene.add.image(vars.canvas.cX-125, vars.canvas.cY+65, 'slimer', 'slimerLeftArm').setOrigin(1,1).setAngle(30);
+                    let rightArm = scene.add.image(vars.canvas.cX+140, vars.canvas.cY+70, 'slimer', 'slimerRightArm').setOrigin(0,1).setAngle(320);
+
+                    if (scene.containers===undefined) {
+                        scene.containers = { }
+                    }
+                    scene.containers.slimer = scene.add.container(0, 0, [body, leftArm, rightArm]).setScale(0.1).setDepth(100).setAlpha(0.75).setVisible(false);
+
+                    // animate the arms
+                    scene.tweens.add({ targets: leftArm, angle: -30, repeat: -1, yoyo: true, duration: 250, delay: 250 })
+                    scene.tweens.add({ targets: rightArm, angle: 45, repeat: -1, yoyo: true, duration: 250 })
+
+                    vars.animate.animsAvailableForCardSet.push(vars.files.ghostbusters.ages.age15.animateSlimer);
+                },
+
+                animateSlimer: ()=> {
+                    let slimer = scene.containers.slimer;
+                    slimer.setVisible(true);
+                    scene.sound.play('slimer');
+                    scene.tweens.add({
+                        targets: slimer,
+                        scale: 2.5,
+                        duration: 4000,
+                        ease: 'Quad.easeIn',
+                        onComplete: (_t, _o)=> {
+                            _o[0].setScale(0.2);
+                            _o[0].setVisible(false);
+                        }
+                    })
+                }
+            }
+        },
         cardType: 'atlas',
         editionText: 'Ghostbusters Edition',
         paragraph: '\n',
@@ -286,15 +369,22 @@ vars.files = {
             good: [],
             bad:  [],
             win:  'ghostbustersWin.ogg',
-            init: function() { // this will be replaced with a random yes/no set from all available card sets
+            init: function() {
                 this.bad = Phaser.Utils.Array.NumberArray(1,24,'ghostbustersNo','.ogg');
                 this.good = Phaser.Utils.Array.NumberArray(1,16,'ghostbustersYes','.ogg');
             }
         },
 
         init: function() {
+            vars.files.replaceAssets(this.ages, this.sounds, this.images); // you need to pass the age data as well as the stuff you wanna change
             this.sounds.init();
-        }
+            if (vars.player.age15===true) {
+                vars.files.ghostbusters.ages.age15.loadOthers();
+            } else if (vars.player.age12===true) {
+                vars.files.ghostbusters.ages.age12.loadOthers();
+            }
+        },
+
     },
 
     starWarsLego: {
@@ -366,6 +456,48 @@ vars.files = {
             case 'addition':     fV.addition.sounds.init();    multiLoaderNumbers('addition');    break;
             case 'subtraction':  fV.subtraction.sounds.init(); multiLoaderNumbers('subtraction'); break;
         }
+    },
+
+    replaceAssets: (_ageData, _originalSounds, _originalImages)=> {
+        let a12 = false; let a15 = false;
+        let pV = vars.player;
+        if (pV.age12) { a12=true; }
+        if (pV.age15) { a15=true; }
+
+        if (!a12 && !a15) {
+            console.log('No changes were made to the files');
+            return false;
+        }
+        let ages = { age12: a12, age15: a15 };
+
+        // you only get to here by being 12+ or 15+
+        ['age12','age15'].forEach( (ag)=> {
+            if (_ageData[ag]!==undefined && ages[ag]) {
+                let ageNum = ~~(ag.replace('age',''));
+                let sounds = _ageData[ag].sounds===undefined ? false: _ageData[ag].sounds;
+                let images = _ageData[ag].images===undefined ? false: _ageData[ag].images;
+
+                // replace the named sound files (if any)
+                if (sounds!==false) {
+                    sounds.forEach( (replaceMe)=> {
+                        console.log(`Replacing "${replaceMe}" with age ${ag.replace('age','')} appropriate audio`);
+                        _originalSounds[replaceMe] = _originalSounds[replaceMe].replace(/\.[a-z]{3}/,`_${ageNum}$&`);
+                    })
+                }
+
+                // replace the named image files (if any)
+                if (images!==false) {
+                    images.forEach( (replaceMe)=> {
+                        console.log(`Replacing "${replaceMe}" with age ${ageNum} appropriate image`);
+                        _originalImages.forEach( (img)=> {
+                            if (img[0]===replaceMe) {
+                                img[1] = img[1].replace(/\.[a-z]{3}/,`_${ageNum}$&`);
+                            }
+                        })
+                    })
+                }
+            }
+        })
     }
 },
 
@@ -484,6 +616,20 @@ vars.localStorage = {
             vars.player.name = lS.match2_playerName
         }
 
+        // 12+
+        if (lS.match2_12===undefined) {
+            lS.match2_12=false;
+        } else {
+            vars.player.age12 = lS.match2_12 === "false" ? false: true; // conversion from string to bool
+        }
+
+        // 15+
+        if (lS.match2_15===undefined) {
+            lS.match2_15=false;
+        } else {
+            vars.player.age15 = lS.match2_15 === "false" ? false: true;
+        }
+
     },
 
     backgroundsForNumbersUpdate: function() { // the player has unlocked the current background
@@ -578,6 +724,38 @@ vars.localStorage = {
         } else {
             console.error('This card has already been unlocked!\nIgnoring request');
         }
+    },
+
+    updateAge12: function() {
+        // enables/disables Age 12 restrictions
+        let message = '';
+        if (vars.player.age12===false) {
+            vars.player.age12 = true;
+            window.localStorage.match2_12=true;
+            message = "Age 12 CONFIRMED";
+        } else {
+            vars.player.age12 = false;
+            window.localStorage.match2_12=false;
+            message = "Age 12 DISABLED";
+        }
+        let a = scene.add.bitmapText(vars.canvas.width-10, 60, 'default', message, 48).setOrigin(1).setAlpha(0).setDepth(100);
+        scene.tweens.add({ targets: a, alpha: 1, duration: 500, yoyo: true, hold: 3000, onComplete: (_tween, _object)=> { _object[0].destroy(); } })
+    },
+
+    updateAge15: function() {
+        // enables/disables Age 12 restrictions
+        let message = '';
+        if (vars.player.age15===false) {
+            vars.player.age15 = true;
+            window.localStorage.match2_15=true;
+            message = "Age 15 CONFIRMED";
+        } else {
+            vars.player.age15 = false;
+            window.localStorage.match2_15=false;
+            message = "Age 15 DISABLED";
+        }
+        let a = scene.add.bitmapText(vars.canvas.width-10, 60, 'default', message, 48).setOrigin(1).setAlpha(0).setDepth(100);
+        scene.tweens.add({ targets: a, alpha: 1, duration: 500, yoyo: true, hold: 1000, onComplete: (_tween, _object)=> { _object[0].destroy(); } })
     },
 
     updateBGColour: function() {

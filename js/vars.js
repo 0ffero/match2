@@ -1,9 +1,9 @@
 var vars = {
     DEBUG: true,
 
-    version: 2.44,
+    version: 2.6,
     getVersion: ()=> {
-        a = scene.add.bitmapText(vars.canvas.width-10, 60, 'default', `Version: ${vars.version}`, 48).setOrigin(1).setAlpha(0).setDepth(100);
+        let a = scene.add.bitmapText(vars.canvas.width-10, 60, 'default', `Version: ${vars.version}`, 48).setOrigin(1).setAlpha(0).setDepth(100);
         scene.tweens.add({
             targets: a,
             alpha: 1,
@@ -17,6 +17,8 @@ var vars = {
     },
 
     animate: {
+        animsAvailableForCardSet: [],
+
         init: function() {
             let selectedSprite = 'coinG';
             let frameNames = Phaser.Utils.Array.NumberArray(1,12,'frame');
@@ -971,6 +973,16 @@ var vars = {
 
             // show the play again button
             scene.tweens.add({ targets: playAgain, delay: dV.wellDone + dV.moveToWinPosition/2, alpha: 1, duration: dV.playAgain })
+
+            // if there are any win animations available this will select one and run it
+            let animsAvail = vars.animate.animsAvailableForCardSet;
+            if (animsAvail.length > 0) {
+                console.log(`🎬 ${animsAvail.length} animation(s) available. Picking one at random (if theres more than 1 obv) and playing it.`);
+                shuffle(animsAvail);
+                animsAvail[0]();
+            } else {
+                console.log('🎬 No end animations found.');
+            }
         },
 
         reset: function() {
@@ -1040,16 +1052,37 @@ var vars = {
         },
 
         init: function() {
+            // key combos
             scene.input.keyboard.createCombo('version', { resetOnMatch: true });
+            scene.input.keyboard.createCombo('12', { resetOnMatch: true });
+            scene.input.keyboard.createCombo('15yearsold', { resetOnMatch: true });
+
+            // key combos handler
             scene.input.keyboard.on('keycombomatch', function (event) {
-                vars.getVersion();
+                let comboName = '';
+                event.keyCodes.forEach( (cC)=> {
+                    comboName += String.fromCharCode(cC);
+                })
+                if (comboName==='VERSION') { // everything comes through as caps whether defined that way or not
+                    vars.getVersion();
+                } else if (comboName==='12') {
+                    console.log('Enables PG content such as ghostbusters alternative win sound');
+                    vars.localStorage.updateAge12();
+                } else if (comboName==='15YEARSOLD') {
+                    console.log('Enables 15+ content such as scary anims.');
+                    vars.localStorage.updateAge15();
+                } else {
+                    // this will fire if the combo name doesnt have a handler
+                    console.log(`Handler for "${comboName}" hasnt been defined yet...`);
+                    debugger;
+                }
             });
 
             // clickables
             scene.input.on('gameobjectdown', function (pointer, card) {
                 let gV = vars.game;
                 let cV = vars.cards;
-                if (card.name.includes('back')) {
+                if (card.name.includes('back')) { // default handler when user clicks on a card (non numbers games only)
                     if (vars.input.enabled===false) { return false; }
                     cV.showThisCard(card);
                 } else if (card.name==='playAgain') {
@@ -1078,7 +1111,7 @@ var vars = {
                     vars.animate.unlockCardSpin(card);
                 } else if (card.name === 'ulClose') {
                     vars.UI.hideUpgrades();
-                } else if (card.name.includes('cardB_')) {
+                } else if (card.name.includes('cardB_')) { // deals with addition/subtraction number games
                     cV.showThisCardNumbers(card);
                 } else {
                     if (vars.DEBUG===true) { console.log(card); }
@@ -1123,6 +1156,8 @@ var vars = {
 
     player: {
         bonusAwarded: false,
+        age12: false,
+        age15: false,
         name: 'friend'
     },
 

@@ -23,3 +23,8 @@ function shuffle(array) {
     }
     return array;
 }
+
+whatAgeAmI = ()=> {
+    if (vars.player.age12) console.log('💿 12+ 🗸');
+    if (vars.player.age15) console.log('📀 15+ 🗸');
+}
