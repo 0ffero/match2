@@ -86,6 +86,10 @@ function preload() {
 █████ █   █ █████ █   █   █   █████ 
 */
 function create() {
+    // INITIALISE THE CAMERA
+    // USED TO SHAKE THE SCREEN IN SOME ANIMATIONS
+    vars.camera.init();
+
     vars.cards.buildDefaultArrays();
     vars.imageSets.init();
 
@@ -93,15 +97,8 @@ function create() {
     let lS = window.localStorage;
     if (lS.match2_selectedGame==='addition' || lS.match2_selectedGame==='subtraction') { numbersGame = true; }
 
-    scene.groups = {};
-    scene.groups.cardsGroup     = scene.add.group();
-    scene.groups.cardBacksGroup = scene.add.group();
-    scene.groups.foundGroup     = scene.add.group(); // unused
-    scene.groups.bgOptions      = scene.add.group();
-    scene.groups.coins          = scene.add.group();
-    scene.groups.upgrades       = scene.add.group();
-
-    scene.groups.additionBlackBGs = scene.add.group();
+    // INITILIASE GROUPS
+    vars.groups.init();
 
     // DRAW GAME BOARD
     if (numbersGame === false) { vars.game.drawCards(); } else { vars.cards.createAdditionPairs(); }

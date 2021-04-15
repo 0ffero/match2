@@ -1,7 +1,7 @@
 var vars = {
     DEBUG: true,
 
-    version: 2.6,
+    version: 2.63,
     getVersion: ()=> {
         let a = scene.add.bitmapText(vars.canvas.width-10, 60, 'default', `Version: ${vars.version}`, 48).setOrigin(1).setAlpha(0).setDepth(100);
         scene.tweens.add({
@@ -276,6 +276,18 @@ var vars = {
         playSoundCoin: function() {
             let aVV = vars.audio.volumeOfCoins;
             scene.sound.play('coinAdd', { volume: aVV } );
+        }
+    },
+
+    camera: {
+        mainCam: null,
+
+        init: function() {
+            vars.camera.mainCam = scene.cameras.main;
+        },
+
+        shake: function(_duration=100) {
+            vars.camera.mainCam.shake(_duration);
         }
     },
 
@@ -1052,10 +1064,11 @@ var vars = {
         },
 
         init: function() {
-            // key combos
+            // INITIALISE COMBOS
             scene.input.keyboard.createCombo('version', { resetOnMatch: true });
             scene.input.keyboard.createCombo('12', { resetOnMatch: true });
             scene.input.keyboard.createCombo('15yearsold', { resetOnMatch: true });
+            scene.input.keyboard.createCombo('whatageami', { resetOnMatch: true });
 
             // key combos handler
             scene.input.keyboard.on('keycombomatch', function (event) {
@@ -1071,6 +1084,8 @@ var vars = {
                 } else if (comboName==='15YEARSOLD') {
                     console.log('Enables 15+ content such as scary anims.');
                     vars.localStorage.updateAge15();
+                }else if (comboName==='WHATAGEAMI') {
+                    whatAgeAmI();
                 } else {
                     // this will fire if the combo name doesnt have a handler
                     console.log(`Handler for "${comboName}" hasnt been defined yet...`);

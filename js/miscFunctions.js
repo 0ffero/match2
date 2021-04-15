@@ -12,6 +12,8 @@ function generateRandomID(_g=false) {
     return generatedID;
 }
 
+limit = Phaser.Math.Clamp;
+
 function shuffle(array) {
     var currentIndex = array.length, temporaryValue, randomIndex;
     while (0 !== currentIndex) {
@@ -25,6 +27,10 @@ function shuffle(array) {
 }
 
 whatAgeAmI = ()=> {
-    if (vars.player.age12) console.log('💿 12+ 🗸');
-    if (vars.player.age15) console.log('📀 15+ 🗸');
+    let message = '';
+    if (vars.player.age12) message = '\n💿 12+ 🗸';
+    if (vars.player.age15) message+= '\n📀 15+ 🗸';
+    if (message.length===0) { message = '\n💿 12+ 🗙\n📀 15+ 🗙' }
+    let a = scene.add.text(vars.canvas.width-10, -40, message).setFontSize(64).setOrigin(1,0).setAlpha(0).setDepth(100);
+    scene.tweens.add({ targets: a, alpha: 1, duration: 500, yoyo: true, hold: 3000, onComplete: (_tween, _object)=> { _object[0].destroy(); } })
 }

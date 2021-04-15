@@ -296,6 +296,7 @@ vars.files = {
                         onYoyo: function (_tween, _object) {
                             _object.frame.name==='frame1' ? _object.setFrame('frame2') : _object.setFrame('frame1');
                             scene.sound.play('stayPuftStep');
+                            vars.camera.shake(333);
                         },
                         onComplete: (_t, _o)=> {
                             scene.tweens.add({
@@ -502,6 +503,18 @@ vars.files = {
 },
 
 vars.groups = {
+    init: ()=> {
+        scene.groups = {};
+        scene.groups.cardsGroup     = scene.add.group();
+        scene.groups.cardBacksGroup = scene.add.group();
+        scene.groups.foundGroup     = scene.add.group(); // unused
+        scene.groups.bgOptions      = scene.add.group();
+        scene.groups.coins          = scene.add.group();
+        scene.groups.upgrades       = scene.add.group();
+
+        scene.groups.additionBlackBGs = scene.add.group();
+    },
+
     empty: function(_gName) {
         let selectedGroup = scene.groups[_gName];
         selectedGroup.children.each( (c)=> {
@@ -537,59 +550,39 @@ vars.localStorage = {
     init: function() {
         let lS = window.localStorage;
         let lV = vars.localStorage;
-        let gV = vars.game;
-        let cV = vars.cards;
+        let gV = vars.game; let cV = vars.cards; let pV = vars.player;
 
         // reset all save vars so the unlocks work properly
         if (lS.match2_resetData===undefined) { lV.resetAll(); }
 
         if (lS.match2_selectedGame===undefined) {
             lS.match2_selectedGame='batmanLego';
-            lS.match2_best=999;
-            lS.match2_bgColour='2,0';
-            gV.bestScore=999;
+            lS.match2_best=999; lS.match2_bgColour='2,0'; gV.bestScore=999;
         } else {
-            gV.bestScore=parseInt(lS.match2_best);
-            vars.imageSets.current = lS.match2_selectedGame;
+            gV.bestScore=parseInt(lS.match2_best); vars.imageSets.current = lS.match2_selectedGame;
         }
 
         // updates since caleb first played the game
         // backgrounds
-        if (lS.match2_bgColour===undefined) {
-            lS.match2_bgColour='2,0';
-        } else {
-            gV.bgColour= lS.match2_bgColour;
-        }
+        if (lS.match2_bgColour===undefined) { lS.match2_bgColour='2,0'; } else { gV.bgColour= lS.match2_bgColour; }
 
         // difficulty
-        if (lS.match2_difficulty===undefined) {
-            lS.match2_difficulty='veryEasy';
-        } else {
-            gV.difficulty = lS.match2_difficulty;
-        }
+        if (lS.match2_difficulty===undefined) { lS.match2_difficulty='veryEasy'; } else { gV.difficulty = lS.match2_difficulty; }
 
         // score system (ie coins)
         if (lS.match2_playerScoreEVE===undefined) {
-            lS.match2_playerScoreEVE=0;
-            lS.match2_playerScoreNH=0;
-            gV.score = 0;
+            lS.match2_playerScoreEVE=0; lS.match2_playerScoreNH=0; gV.score = 0;
         } else {
-            if (gV.difficulty.toLowerCase().includes('easy')) {
-                gV.score = parseInt(lS.match2_playerScoreEVE);
-            } else {
-                gV.score = parseInt(lS.match2_playerScoreNH);
-            }
+            if (gV.difficulty.toLowerCase().includes('easy')) { gV.score = parseInt(lS.match2_playerScoreEVE); } else { gV.score = parseInt(lS.match2_playerScoreNH); }
         }
 
         // unlocks
         if (lS.match2_unlocks===undefined) {
             lS.match2_unlocks='';
         } else {
-            cV.unlockedStr = '';
-            cV.unlocked = [];
+            cV.unlockedStr = ''; cV.unlocked = [];
             let unlocks = lV.convertLSunlocks(lS.match2_unlocks);
-            cV.unlocks = unlocks;
-            cV.unlockedToStr();
+            cV.unlocks = unlocks; cV.unlockedToStr();
         }
 
         if (lS.match2_unlocksAddition===undefined) {
@@ -602,33 +595,21 @@ vars.localStorage = {
             gV.firstGame = true;
         } else {
             let cDate = lV.getDate();
-            if (lS.match2_bonusGiven!==cDate) {
-                gV.firstGame = true;
-            } else {
-                gV.firstGame = false;
-            }
+            if (lS.match2_bonusGiven!==cDate) { gV.firstGame = true; } else { gV.firstGame = false; }
         }
 
         // player name
-        if (lS.match2_playerName===undefined) {
-            lS.match2_playerName='Caleb';
-        } else {
-            vars.player.name = lS.match2_playerName
-        }
+        if (lS.match2_playerName===undefined) { lS.match2_playerName='Caleb'; } else { pV.name = lS.match2_playerName }
 
         // 12+
         if (lS.match2_12===undefined) {
             lS.match2_12=false;
         } else {
-            vars.player.age12 = lS.match2_12 === "false" ? false: true; // conversion from string to bool
+            pV.age12 = lS.match2_12 === "false" ? false: true; // conversion from string to bool
         }
 
         // 15+
-        if (lS.match2_15===undefined) {
-            lS.match2_15=false;
-        } else {
-            vars.player.age15 = lS.match2_15 === "false" ? false: true;
-        }
+        if (lS.match2_15===undefined) { lS.match2_15=false; } else { pV.age15 = lS.match2_15 === "false" ? false: true; }
 
     },
 
