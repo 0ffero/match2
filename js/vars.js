@@ -1,7 +1,7 @@
 var vars = {
     DEBUG: true,
 
-    version: 2.63,
+    version: 2.9,
     getVersion: ()=> {
         let a = scene.add.bitmapText(vars.canvas.width-10, 60, 'default', `Version: ${vars.version}`, 48).setOrigin(1).setAlpha(0).setDepth(100);
         scene.tweens.add({
@@ -27,6 +27,47 @@ var vars = {
             frameNames = Phaser.Utils.Array.NumberArray(1,12,'frame', 's');
             selectedSprite = 'coinS';
             scene.anims.create({ key: selectedSprite, frames: scene.anims.generateFrameNumbers(selectedSprite, { frames: frameNames }), frameRate: 12, repeat: -1 });
+        },
+
+        birthdayMessage: ()=> {
+            vars.animate.grassParallax();
+
+            let txt = scene.add.bitmapText(vars.canvas.cX, 100, 'bDayFont', 'Click the cake to blow out the candles :)', 88).setOrigin(0.5).setDepth(consts.depths.cake+1).setName('bDayText');
+            scene.tweens.add({
+                targets: txt,
+                alpha: 0.3, duration: 1000,
+                yoyo: true, repeat: -1
+            })
+
+            let bDayMessage = vars.player.bDay.relativityText;
+            let bDayArray = bDayMessage.split('');
+            scene.groups.bdayText = scene.add.group();
+            let x = 90; let y=vars.canvas.height-100;
+            let colours = [0xff0000, 0xff8000, 0xffff00, 0x00ff00, 0x00bfff, 0x8000ff, 0xbf00ff];
+
+            bDayArray.forEach( (l, i)=> {
+                let ob = scene.add.bitmapText(x,y,'bDayFont', l, 100).setDepth(consts.depths.cake+1).setTint(colours[i%7]).setOrigin(0.5);
+                x+=45;
+                scene.groups.bdayText.add(ob);
+                scene.tweens.add({ // this adds a kind of jumping motion to the text. when I realised that I decided to add parallax grass below the letters
+                    targets: ob,
+                    y: y-150, x: ob.x-50,
+                    yoyo: true, repeat: -1,
+                    duration: 1000, delay: i*30,
+                    ease: 'Cubic'
+                })
+            })
+
+        },
+
+        candlesBlow: ()=> {
+            let outOrder = shuffle(Phaser.Utils.Array.NumberArray(0,6))
+            outOrder.forEach( (o,i)=> {
+                let obj = vars.particles.candles[o];
+                setTimeout( ()=> {
+                    obj.visible=false; obj.active=false;
+                },100*i)
+            })
         },
 
         coinsGenerate: function(_coinData) {
@@ -126,6 +167,30 @@ var vars = {
                 });
                 vars.animate.numbersAnswersToFaceDown();
             }
+        },
+
+        grassParallax: ()=> {
+            //  grass sprite = 925,158
+            let g = [925,158];
+            if (scene.containers===undefined) { scene.containers = {} }
+            scene.containers.grass = scene.add.container();
+            let required = ~~(vars.canvas.width/g[0]+1);
+            let x=0;
+            for (let i=-1; i<required; i++) {
+                let ob = scene.add.image(x, 0, 'grass').setDepth(101).setOrigin(0,1);
+                scene.containers.grass.add([ob]);
+                x+=g[0];
+            }
+
+            scene.containers.grass.setDepth(101).setPosition(-g[0], vars.canvas.height);
+
+            scene.tweens.add({
+                targets: scene.containers.grass,
+            
+                x: 1, // the -2 makes the scrolling smooth at 500 duration (change to 1 for 1000)
+                duration: 500,
+                repeat: -1
+            })
         },
 
         numberCardsToInitState: function() {
@@ -250,6 +315,24 @@ var vars = {
         win: null,
         yes: [],
         yesUsed: [],
+
+        candles: (_enable=true)=> {
+            if (_enable===true) {
+                scene.sound.play('candleSpark', {loop: true})
+            } else {
+                scene.sound.stopByKey('candleSpark');
+            }
+        },
+
+        candlesBlow: ()=> {
+            // play the blowing sound
+            scene.sound.play('blowCandles');
+        },
+
+        hooray: ()=> {
+            // play the hooray sound
+            scene.sound.play('hooray');
+        },
 
         lastSoundCheck: function(__type) {
             if (vars.audio[__type].length===0) {
@@ -1128,6 +1211,72 @@ var vars = {
                     vars.UI.hideUpgrades();
                 } else if (card.name.includes('cardB_')) { // deals with addition/subtraction number games
                     cV.showThisCardNumbers(card);
+                } else if (card.name==='bDayCake') { // caleb has clicked on the birthday cake.
+                    // find the original tween and stop it
+                    scene.tweens._active.forEach( (c)=> {
+                        let t = c.targets[0];
+                        if (t.name==='bDayText') {
+                            //console.log('found');
+                            c.complete();
+                        }
+                    })
+                    
+                    // grab the blow text so we can change the text
+                    let blowText = scene.children.getByName('bDayText');
+
+                    blowText.setText('Happy seventh Birthday, Caleb.\nLove, Dad xxx').setOrigin(0.5).setName('happyText').setAlpha(1);
+                    scene.tweens.add({
+                        targets: blowText,
+                        alpha: 0, y: blowText.y+300,
+
+                        duration: 5000, delay: 3000,
+                        onComplete: (_tween, _object)=> { _object[0].destroy(); }
+                    })
+
+                    // start blow sound effect
+                    vars.audio.candlesBlow(); // 897ms
+                    // blow the candles out 1 by 1
+                    vars.animate.candlesBlow();
+
+                    setTimeout( ()=> {
+                        // stop the candle noise
+                        vars.audio.candles(false);
+                        // play hip hip sound
+                        vars.audio.hooray();
+                        // start fading out all the things
+                        scene.containers.grass.destroy();
+                        scene.groups.bdayText.children.each( (c)=> {
+                            c.destroy();
+                        })
+                        scene.groups.bdayText.destroy();
+                        
+                        // fade out the cake and bg, then destroy each of them
+                        let bg = scene.children.getByName('cakeBG');
+                        let batCake = scene.children.getByName('bDayCake');
+                        scene.tweens.add({
+                            targets: [bg, batCake],
+                            alpha: 0,
+                            duration: 3000,
+                            onComplete: (_tween, _object)=> { 
+                                if (_object[0].name==='cakeBG') {
+                                    // fade in small cake
+                                    let weeCake = scene.add.image(vars.canvas.width/5*4+100, vars.canvas.height/5*4-75, 'batCake').setScale(0.4).setName('weeCake').setAlpha(0).setInteractive();
+                                    scene.tweens.add({
+                                        targets: weeCake,
+                                        alpha: 1,
+                                        duration: 3000,
+                                        delay: 5000
+                                    })
+                                }
+                                _object[0].destroy();
+                            }
+                        })
+                    }, 897)
+                } else if (card.name==='weeCake') { // deals with addition/subtraction number games
+                    console.log('Wee Cake Was Clicked');
+                    // we do a really bad thing here... however Ive compressed most of the files that need to be loaded... so... yolo?
+                    window.localStorage.match2_seenCake=false;
+                    window.location.reload();
                 } else {
                     if (vars.DEBUG===true) { console.log(card); }
                 }
@@ -1136,9 +1285,12 @@ var vars = {
     },
 
     particles: {
+        candles: [],
+        candlesVisible: false,
+
         init: function() {
             scene.particles = {}
-            
+
             // SNOW
             scene.particles.snow = scene.add.particles('snowSpritesLarge');
             //scene.particles.rain = scene.add.particles('flares');
@@ -1154,8 +1306,64 @@ var vars = {
 
             scene.particles.xmasTree = scene.add.particles('flares');
             scene.particles.xmasTree.createEmitter({ frame: 'green', x: 1620, y: 500, speed: 0, lifespan: 2000, delay: 2000, quantity: 48, frequency: 2000, delay: 500, scale: { start: 0.2, end: 0.1 }, blendMode: 'ADD', emitZone: { type: 'edge', source: tree, quantity: 48 } });
-            scene.particles.xmasTree.createEmitter({ frame: 'red', tint: 0xffff00, x: 1580, y: 620, speed: 0, alpha: 0.4, lifespan: 500, delay: 500, frequency: 0, quantity: 1, scale: 0.2, blendMode: 'ADD', emitZone: { type: 'edge', source: trunk, quantity: 48 } });
+            scene.particles.xmasTree.createEmitter({ frame: 'red', x: 1580, y: 620, lifespan: 500, tint: 0xffff00, speed: 0, alpha: 0.4, delay: 500, frequency: 0, quantity: 1, scale: 0.2, blendMode: 'ADD', emitZone: { type: 'edge', source: trunk, quantity: 48 } });
             scene.particles.xmasTree.createEmitter({ frame: 'red', x: 1620, y: 500, lifespan: 500, quantity: 1, frequency: 200, scale: 0.6, blendMode: 'ADD', emitZone: { type: 'edge', source: tree, quantity: 12 } });
+
+            // CAKE SPARKLERS
+            vars.particles.createCandleSparks();
+        },
+
+        candlesDisable: function() {
+            let pV = vars.particles;
+            pV.candles.forEach( (c)=> {
+                c.visible=false; c.active=false;
+            })
+            vars.audio.candles(false);
+            pV.candlesVisible=false;
+        },
+
+        candlesEnable: function() {
+            let pV = vars.particles;
+            pV.candles.forEach( (c)=> {
+                c.active = true;
+                c.setVisible(true);
+            })
+            vars.audio.candles(true);
+            pV.candlesVisible=true;
+        },
+
+        createCandleSparks: function() {
+            if (vars.player.bDay.seen!=='enabled') {
+                return false;
+            }
+
+            // we only do this if the birthday is valid, tod/tom/yest and the cake hasnt been seen
+            console.log('Setting up birthday cake candle particles');
+            let fA = vars.particles.candles;
+            let defX = vars.canvas.cX-100;
+            let defY = vars.canvas.cY-230;
+            let placements = [ // candles from left to right
+                [defX - 50,  defY], // mids
+                [defX + 255, defY],
+                
+                [defX +  10, defY + 10], // front
+                [defX + 110, defY + 10],
+                [defX + 205, defY + 10],
+                
+                [defX +  65, defY - 10], // back
+                [defX + 152, defY - 15]
+            ] 
+            placements.forEach( (c)=>{
+                let x = c[0]; let y = c[1];
+                let particle = scene.add.particles('spark1').setName('particle_' + c).setDepth(consts.depths.cake+1).createEmitter({
+                    active: false, x: x, y: y,
+                    speed: { min: 200, max: 400 }, angle: { min: 250, max: 290 },
+                    scale: { start: 0.6, end: 0 }, tint: { min: 0xff0000, max: 0xffff00 },
+                    blendMode: 'SCREEN', lifespan: 600, gravityY: 600
+                });
+                fA.push(particle);
+                //scene.groups.winnerUI.add(particle); // you cant add the emitter to a group (If I really need to I can move createEmitter to the next line. probably not necessary)
+            })
         },
 
         snowParticles: function() {
@@ -1173,7 +1381,14 @@ var vars = {
         bonusAwarded: false,
         age12: false,
         age15: false,
-        name: 'friend'
+        name: 'friend',
+        bDay: {
+            str: "428",
+            seen: false,
+            when: false,
+            relativity: false,
+            relativityText: false,
+        }
     },
 
     UI: {
@@ -1206,7 +1421,6 @@ var vars = {
 
             // Card Set options
             scene.add.bitmapText(190, 20, 'default', 'Select a card set...', 72, 1).setTint(0x0092DC).setName('optionsTitle').setVisible(false).setDepth(consts.depths.options);
-
 
 
             // GAME SCREEN OPTIONS
@@ -1256,6 +1470,28 @@ var vars = {
             let days = ~~((end-today)/1000/(60*60*24));
             if (days>-8 && days<8) {
                 vars.particles.snowParticles();
+            }
+
+            // is it Calebs birthday?
+            let bDay = vars.player.bDay;
+            if (bDay.seen==='enabled') {
+                // set up the birthday message text
+                vars.animate.birthdayMessage();
+                // show the cake
+                scene.add.image(0,0,'whitePixel').setTint(0x0).setDepth(consts.depths.cake-1).setAlpha(0.96).setName('cakeBG').setScale(vars.canvas.width, vars.canvas.height).setOrigin(0);
+                scene.add.image(vars.canvas.cX, vars.canvas.cY, 'batCake').setDepth(consts.depths.cake).setName('bDayCake').setInteractive();
+                // add the candle sparkles
+                vars.particles.createCandleSparks();
+                vars.particles.candlesEnable();
+
+                // set the seen var so it doesnt show at the start of each game
+                bDay.seen=true;
+
+                // start "Happy Birthday"
+                scene.sound.play('happyBirthday');
+            } else if (bDay.seen===true) {
+                // its still within the 3 days, so show the small cake. this will allow caleb to view the birthday intro at any time during those days, even if its already been seen
+                scene.add.image(vars.canvas.width/5*4+100, vars.canvas.height/5*4-75, 'batCake').setScale(0.4).setName('weeCake').setInteractive();
             }
         },
 

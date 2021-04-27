@@ -26,6 +26,24 @@ function shuffle(array) {
     return array;
 }
 
+getDates = ()=> {
+    let sV = vars.player.bDay.str;
+    let d = new Date();
+    let rets = [];
+    let offsets = ['Yesterday', 'Today', 'Tomorrow'];
+    let found = false; let when = false;
+    [-1,0,1].forEach( (_off)=> {
+        let tD = d.getMonth()+1 + '' + (d.getDate()+_off);
+        if (tD === sV) {
+            found = true;
+            when = offsets[_off+1];
+        }
+
+        rets.push(tD);
+    })
+    return [found, when, rets];
+}
+
 whatAgeAmI = ()=> {
     let message = '';
     if (vars.player.age12) message = '\n💿 12+ 🗸';

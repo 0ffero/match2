@@ -457,6 +457,20 @@ vars.files = {
             case 'addition':     fV.addition.sounds.init();    multiLoaderNumbers('addition');    break;
             case 'subtraction':  fV.subtraction.sounds.init(); multiLoaderNumbers('subtraction'); break;
         }
+
+        if (vars.player.bDay.seen==='enabled') {
+            scene.load.image('batCake',       'images/batCake.png');
+            scene.load.audio('candleSpark',   'audio/sparkler.ogg');
+            scene.load.image('spark1',        'particles/white.png');
+            scene.load.audio('happyBirthday', 'audio/happyBirthdaySong.ogg');
+            scene.load.audio('blowCandles',   'audio/blowOutCandles.ogg');
+            scene.load.audio('hooray',        'audio/hooray.ogg');
+
+            scene.load.bitmapFont('bDayFont', 'fonts/bdayFont.png', 'fonts/bdayFont.xml');
+            scene.load.image('grass',         'images/grass.png'); // width,height = 925,158
+        } else if (vars.player.bDay.seen===true) {
+            scene.load.image('batCake',       'images/batCake.png');
+        }
     },
 
     replaceAssets: (_ageData, _originalSounds, _originalImages)=> {
@@ -611,6 +625,9 @@ vars.localStorage = {
         // 15+
         if (lS.match2_15===undefined) { lS.match2_15=false; } else { pV.age15 = lS.match2_15 === "false" ? false: true; }
 
+        // Birthday
+        if (lS.match2_seenCake===undefined) { lS.match2_seenCake=false; } else { pV.bDay.seen=(lS.match2_seenCake==='true'); }
+        lV.seenCake();
     },
 
     backgroundsForNumbersUpdate: function() { // the player has unlocked the current background
@@ -704,6 +721,32 @@ vars.localStorage = {
             lS.match2_unlocks+=newCardData;
         } else {
             console.error('This card has already been unlocked!\nIgnoring request');
+        }
+    },
+
+    seenCake: ()=> {
+        let lS = window.localStorage;
+        let bV = vars.player.bDay;
+
+        // get todays date
+        let today = getDates();
+        if (today[0]===true && bV.seen===false) {
+            let rel = 'have';
+            switch (today[1]) {
+                case 'Yesterday': rel='had'; break;
+            }
+            // set the local storage var to seen
+            lS.match2_seenCake=true;
+            bV.seen = 'enabled';
+            bV.when = today[1];
+            bV.relativity = rel;
+            bV.relativityText = `Hope you ${rel} an awesome birthday, Caleb!`;
+        } else if (bV.seen===false) {
+            bV.seen = "disabled";
+        } else if (bV.seen===true) {
+            if (today[1]==='Today' || today[1]==='Tomorrow' || today[1]==='Yesterday') {
+                bV.seen=true;
+            }
         }
     },
 

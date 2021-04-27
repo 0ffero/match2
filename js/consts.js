@@ -62,7 +62,8 @@ const consts = {
     },
 
     depths: {
-        snow: 100,
+        snow: 101,
+        cake: 100,
         options: 30,
         unlock: 20,
         coins: 10,
