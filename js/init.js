@@ -73,6 +73,7 @@ function preload() {
     scene.load.html('nameform', 'html/nameForm.html');
 
     // VIDEO
+    multiLoaderVideo();
     //scene.load.video('introVideo', 'video/batman.mp4'); <--- this doesnt exist, but for future reference
 }
 
@@ -116,4 +117,5 @@ function create() {
 
     // UI
     vars.UI.init();
+
 }

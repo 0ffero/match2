@@ -127,3 +127,7 @@ function multiLoaderSounds(_sounds) {
     if (aV.no.length>0) { shuffle(aV.no); }
     if (aV.yes.length>0) { shuffle(aV.yes); }
 }
+
+function multiLoaderVideo() {
+    
+}
